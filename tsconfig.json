@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "target": "es2024",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "types": ["node", "vitest/globals"],
+    "noEmitOnError": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*", "test/bundle.test.ts", "test/utils.test.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+}

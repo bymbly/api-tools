@@ -1,0 +1,42 @@
+{
+  "name": "@bymbly/openapi-tools",
+  "version": "1.0.0",
+  "description": "Shared Tooling for OpenAPI Specs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bymbly/openapi-tools.git"
+  },
+  "publishConfig": {
+    "@bymbly:registry": "https://npm.pkg.github.com"
+  },
+  "bin": {
+    "openapi-bundle": "./dist/bin/bundle.js",
+    "openapi-lint": "./dist/bin/lint.js",
+    "openapi-lint-bundled": "./dist/bin/lint-bundled.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "dependencies": {
+    "@redocly/cli": "^2.12.3",
+    "@stoplight/spectral-cli": "^6.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@vitest/ui": "^4.0.15",
+    "markdownlint-cli2": "0.19.0",
+    "prettier": "3.6.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  }
+}
