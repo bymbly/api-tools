@@ -3,7 +3,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bundle } from "../src/lib/bundle";
 
-describe("Bundle Integration Test", () => {
+describe("Bundle Integration Tests", () => {
   const originalEnv = process.env;
   const originalCwd = process.cwd();
   let tempDir: string;
@@ -80,7 +80,7 @@ describe("Bundle Integration Test", () => {
       });
     });
 
-    it("should rresolve and bundle external references", () => {
+    it("should resolve and bundle external references", () => {
       bundle();
 
       const bundled = fs.readFileSync("dist/openapi.yaml", "utf-8");

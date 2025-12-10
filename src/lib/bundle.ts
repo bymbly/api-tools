@@ -1,5 +1,5 @@
 import { execSync } from "child_process";
-import { createPath } from "./utils.js";
+import { createPath, createValidator } from "./utils.js";
 
 const VALID_FORMATS = ["json", "yaml"] as const;
 export type Format = (typeof VALID_FORMATS)[number];
@@ -8,11 +8,11 @@ export interface BundleOptions {
   input: string;
   output: string;
   format: Format;
+  configPath?: string;
 }
 
-function isValidFormat(format: string): format is Format {
-  return VALID_FORMATS.includes(format as Format);
-}
+const formatValidator = createValidator(VALID_FORMATS);
+export const isValidFormat = formatValidator.isValid;
 
 export function getOptions(): BundleOptions {
   const formatEnv = process.env.OPENAPI_FORMAT;
@@ -22,6 +22,7 @@ export function getOptions(): BundleOptions {
     input: process.env.OPENAPI_INPUT || "openapi/openapi.yaml",
     output: process.env.OPENAPI_OUTPUT || "dist/openapi",
     format,
+    configPath: process.env.OPENAPI_CONFIG,
   };
 }
 
@@ -34,14 +35,17 @@ export function bundle(): void {
   console.log(`   Input: ${options.input}`);
   console.log(`   Output: ${options.output}`);
   console.log(`   Format: ${options.format}`);
+  console.log(`   Config: ${options.configPath || "default"}`);
 
   createPath(outputFile);
 
+  let command = `npx --no @redocly/cli bundle ${options.input} --output ${outputFile}`;
+  if (options.configPath) {
+    command += ` --config ${options.configPath}`;
+  }
+
   try {
-    execSync(
-      `npx --no @redocly/cli bundle ${options.input} --output ${outputFile}`,
-      { stdio: "inherit" },
-    );
+    execSync(command, { stdio: "inherit" });
 
     console.log(`✅ Bundle created successfully: ${outputFile}`);
   } catch (error) {
