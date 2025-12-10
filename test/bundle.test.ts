@@ -26,6 +26,7 @@ describe("Bundle Functions", () => {
         input: "openapi/openapi.yaml",
         output: "dist/openapi",
         format: "yaml",
+        configPath: undefined,
       });
     });
 
@@ -60,13 +61,45 @@ describe("Bundle Functions", () => {
 
       expect(options.format).toBe("yaml");
     });
+
+    it("should use OPENAPI_CONFIG env var when set", () => {
+      process.env.OPENAPI_CONFIG = ".config/redocly.yaml";
+
+      const options = getOptions();
+
+      expect(options.configPath).toBe(".config/redocly.yaml");
+    });
+
+    it("should handle all environment variables together", () => {
+      process.env.OPENAPI_INPUT = "custom/spec.yaml";
+      process.env.OPENAPI_OUTPUT = "custom/dist/openapi";
+      process.env.OPENAPI_FORMAT = "json";
+      process.env.OPENAPI_CONFIG = "custom/config.yaml";
+
+      const options = getOptions();
+
+      expect(options).toEqual({
+        input: "custom/spec.yaml",
+        output: "custom/dist/openapi",
+        format: "json",
+        configPath: "custom/config.yaml",
+      });
+    });
   });
 
   describe("bundle", () => {
     beforeEach(() => {
-      vi.clearAllMocks();
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(execSync).mockReturnValue(Buffer.from(""));
+    });
+
+    it("should call execSync with correct default parameters", () => {
+      bundle();
+
+      expect(execSync).toHaveBeenCalledWith(
+        "npx --no @redocly/cli bundle openapi/openapi.yaml --output dist/openapi.yaml",
+        { stdio: "inherit" },
+      );
     });
 
     it("should create output directory before bundling", () => {
@@ -92,13 +125,27 @@ describe("Bundle Functions", () => {
       expect(command).toContain("custom/dist/openapi.json");
     });
 
+    it("should include --config flag when configPath is set", () => {
+      process.env.OPENAPI_CONFIG = ".config/redocly.yaml";
+
+      bundle();
+
+      const command = vi.mocked(execSync).mock.calls[0][0] as string;
+      expect(command).toContain("--config .config/redocly.yaml");
+    });
+
+    it("should not include --config flag when configPath is not set", () => {
+      bundle();
+
+      const command = vi.mocked(execSync).mock.calls[0][0] as string;
+      expect(command).not.toContain("--config");
+    });
+
     it("should exit with code 1 when bundling fails", () => {
       const mockExit = vi
         .spyOn(process, "exit")
         .mockImplementation(() => undefined as never);
-      const mockError = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => undefined);
+      const mockError = vi.spyOn(console, "error").mockImplementation(() => {});
 
       vi.mocked(execSync).mockImplementation(() => {
         throw new Error("Bundling failed");
