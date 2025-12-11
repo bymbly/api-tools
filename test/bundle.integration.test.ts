@@ -22,7 +22,10 @@ describe("Bundle Integration Tests", () => {
 
   describe("simple spec without references", () => {
     beforeEach(() => {
-      const fixturePath = path.join(originalCwd, "test/fixtures/simple-spec");
+      const fixturePath = path.join(
+        originalCwd,
+        "test/fixtures/valid/simple-spec",
+      );
       fs.cpSync(fixturePath, path.join(tempDir, "openapi"), {
         recursive: true,
       });
@@ -73,7 +76,7 @@ describe("Bundle Integration Tests", () => {
     beforeEach(() => {
       const fixturePath = path.join(
         originalCwd,
-        "test/fixtures/spec-with-refs",
+        "test/fixtures/valid/spec-with-refs",
       );
       fs.cpSync(fixturePath, path.join(tempDir, "openapi"), {
         recursive: true,

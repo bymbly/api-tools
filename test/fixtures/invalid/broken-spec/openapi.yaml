@@ -1,0 +1,6 @@
+# this spec is intentionally invalid for testing purposes
+openapi: 3.1.1
+info:
+  title: Invalid Test API
+
+paths:

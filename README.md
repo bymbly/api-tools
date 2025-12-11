@@ -33,3 +33,17 @@ See:
 
 - [Authenticating to GitHub Packages](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-to-github-packages)
 - [Publishing packages to GitHub Packages](https://docs.github.com/en/actions/how-tos/use-cases-and-examples/publishing-packages/publishing-nodejs-packages)
+
+## Configuration
+
+Configure via the following environment variables:
+
+`OPENAPI_INPUT` - File to process (**default**: `./openapi/openapi.yaml`)
+
+`OPENAPI_OUTPUT` - Where to write output file (**default**: `./dist/openapi.yaml`)
+
+`OPENAPI_FORMAT` - Output format (**default**: `yaml`)
+
+`OPENAPI_LINT_FORMAT` - Linter report format (**default**: `codeframe`)
+
+`OPENAPI_CONFIG_PATH` - Path to redocly.yaml (**default**: `./redocly.yaml`)

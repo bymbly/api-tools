@@ -141,7 +141,7 @@ describe("Bundle Functions", () => {
       expect(command).not.toContain("--config");
     });
 
-    it("should exit with code 1 when bundling fails", () => {
+    it("should exit with status 1 when bundling fails", () => {
       const mockExit = vi
         .spyOn(process, "exit")
         .mockImplementation(() => undefined as never);
