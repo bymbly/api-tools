@@ -16,8 +16,7 @@
   },
   "bin": {
     "openapi-bundle": "./dist/bin/bundle.js",
-    "openapi-lint": "./dist/bin/lint.js",
-    "openapi-lint-bundled": "./dist/bin/lint-bundled.js"
+    "openapi-lint": "./dist/bin/lint.js"
   },
   "scripts": {
     "build": "tsc",
