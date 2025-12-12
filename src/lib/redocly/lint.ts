@@ -1,5 +1,5 @@
 import { execSync } from "child_process";
-import { createValidator } from "./utils.js";
+import { createValidator } from "../utils.js";
 
 const VALID_FORMATS = [
   "codeframe",
@@ -23,7 +23,7 @@ const lintFormatValidator = createValidator(VALID_FORMATS);
 export const isValidLintFormat = lintFormatValidator.isValid;
 
 export function getOptions(): LintOptions {
-  const formatEnv = process.env.OPENAPI_LINT_FORMAT;
+  const formatEnv = process.env.OPENAPI_FORMAT;
   const format =
     formatEnv && isValidLintFormat(formatEnv) ? formatEnv : "codeframe";
 

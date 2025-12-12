@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { lint } from "../src/lib/redocly/lint";
+import { buildDocs } from "../src/lib/redocly/build-docs.js";
 
-describe("Lint Integration Tests", () => {
+describe("Build Docs Integration Tests", () => {
   const originalEnv = process.env;
   const originalCwd = process.cwd();
   let tempDir: string;
@@ -21,7 +21,7 @@ describe("Lint Integration Tests", () => {
   });
 
   describe("valid specs", () => {
-    it("should pass for simple valid spec", () => {
+    it("should build docs for simple spec", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -30,10 +30,17 @@ describe("Lint Integration Tests", () => {
         },
       );
 
-      expect(() => lint()).not.toThrow();
+      buildDocs();
+
+      expect(fs.existsSync("dist/openapi.html")).toBe(true);
+
+      const html = fs.readFileSync("dist/openapi.html", "utf-8");
+
+      expect(html).toContain("<!DOCTYPE html>");
+      expect(html).toContain("Simple Test API");
     });
 
-    it("should pass for spec with references", () => {
+    it("should build docs for spec with references", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/valid/spec-with-refs"),
         path.join(tempDir, "openapi"),
@@ -42,30 +49,19 @@ describe("Lint Integration Tests", () => {
         },
       );
 
-      expect(() => lint()).not.toThrow();
+      buildDocs();
+
+      expect(fs.existsSync("dist/openapi.html")).toBe(true);
+
+      const html = fs.readFileSync("dist/openapi.html", "utf-8");
+
+      expect(html).toContain("<!DOCTYPE html>");
+      expect(html).toContain("Test API with References");
+      expect(html).toContain("TestSchema");
     });
   });
 
   describe("invalid specs", () => {
-    it("should fail invalid spec", () => {
-      fs.cpSync(
-        path.join(originalCwd, "test/fixtures/invalid/broken-spec"),
-        path.join(tempDir, "openapi"),
-        {
-          recursive: true,
-        },
-      );
-
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
-
-      lint();
-
-      expect(mockExit).toHaveBeenCalledWith(1);
-      mockExit.mockRestore();
-    });
-
     it("should fail for nonexistent file", () => {
       process.env.OPENAPI_INPUT = "openapi/nonexistent.yaml";
 
@@ -73,16 +69,16 @@ describe("Lint Integration Tests", () => {
         .spyOn(process, "exit")
         .mockImplementation(() => undefined as never);
 
-      lint();
+      buildDocs();
 
       expect(mockExit).toHaveBeenCalledWith(1);
       mockExit.mockRestore();
     });
   });
 
-  describe("different configurations", () => {
-    it("should work with custom input path", () => {
-      fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
+  describe("custom configurations", () => {
+    it("should build docs with custom input path", () => {
+      fs.mkdirSync(path.join(tempDir, "custom"));
       fs.copyFileSync(
         path.join(originalCwd, "test/fixtures/valid/simple-spec/openapi.yaml"),
         path.join(tempDir, "custom/spec.yaml"),
@@ -90,10 +86,29 @@ describe("Lint Integration Tests", () => {
 
       process.env.OPENAPI_INPUT = "custom/spec.yaml";
 
-      expect(() => lint()).not.toThrow();
+      buildDocs();
+
+      expect(fs.existsSync("dist/openapi.html")).toBe(true);
     });
 
-    it("should work with custom config path", () => {
+    it("should build docs with custom output path", () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        {
+          recursive: true,
+        },
+      );
+
+      process.env.OPENAPI_OUTPUT = "custom-dist/docs.html";
+
+      buildDocs();
+
+      expect(fs.existsSync("custom-dist/docs.html")).toBe(true);
+      expect(fs.existsSync("dist/openapi.html")).toBe(false);
+    });
+
+    it("should build docs with custom config path", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -107,7 +122,7 @@ describe("Lint Integration Tests", () => {
         "test/fixtures/redocly.yaml",
       );
 
-      expect(() => lint()).not.toThrow();
+      expect(() => buildDocs()).not.toThrow();
     });
   });
 });

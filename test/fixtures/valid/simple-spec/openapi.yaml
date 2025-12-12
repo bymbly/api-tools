@@ -1,6 +1,6 @@
 openapi: 3.1.1
 info:
-  title: Test API
+  title: Simple Test API
   version: 1.0.0
   license:
     name: example.dev
