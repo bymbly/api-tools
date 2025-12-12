@@ -1,12 +1,10 @@
 import { execSync } from "child_process";
-import fs from "fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bundle, getOptions } from "../src/lib/redocly/bundle.js";
+import { getOptions, lint } from "../../src/lib/redocly/lint.js";
 
-vi.mock("fs");
 vi.mock("child_process");
 
-describe("Bundle Functions", () => {
+describe("Lint Functions", () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
@@ -24,42 +22,25 @@ describe("Bundle Functions", () => {
 
       expect(options).toEqual({
         input: "openapi/openapi.yaml",
-        output: "dist/openapi",
-        format: "yaml",
+        format: "codeframe",
         configPath: undefined,
       });
     });
 
     it("should use OPENAPI_INPUT env var when set", () => {
-      process.env.OPENAPI_INPUT = "custom/path/spec.yaml";
+      process.env.OPENAPI_INPUT = "api/spec.yaml";
 
       const options = getOptions();
 
-      expect(options.input).toBe("custom/path/spec.yaml");
-    });
-
-    it("should use OPENAPI_OUTPUT env var when set", () => {
-      process.env.OPENAPI_OUTPUT = "custom/dist/openapi";
-
-      const options = getOptions();
-
-      expect(options.output).toBe("custom/dist/openapi");
+      expect(options.input).toBe("api/spec.yaml");
     });
 
     it("should use OPENAPI_FORMAT env var when set", () => {
-      process.env.OPENAPI_FORMAT = "json";
+      process.env.OPENAPI_FORMAT = "github-actions";
 
       const options = getOptions();
 
-      expect(options.format).toBe("json");
-    });
-
-    it("should default to yaml format when OPENAPI_FORMAT is invalid", () => {
-      process.env.OPENAPI_FORMAT = "xml";
-
-      const options = getOptions();
-
-      expect(options.format).toBe("yaml");
+      expect(options.format).toBe("github-actions");
     });
 
     it("should use OPENAPI_CONFIG env var when set", () => {
@@ -70,93 +51,85 @@ describe("Bundle Functions", () => {
       expect(options.configPath).toBe(".config/redocly.yaml");
     });
 
+    it("should default to codeframe format when OPENAPI_FORMAT is invalid", () => {
+      process.env.OPENAPI_FORMAT = "invalid-format";
+
+      const options = getOptions();
+
+      expect(options.format).toBe("codeframe");
+    });
+
     it("should handle all environment variables together", () => {
       process.env.OPENAPI_INPUT = "custom/spec.yaml";
-      process.env.OPENAPI_OUTPUT = "custom/dist/openapi";
       process.env.OPENAPI_FORMAT = "json";
-      process.env.OPENAPI_CONFIG = "custom/config.yaml";
+      process.env.OPENAPI_CONFIG = "custom/redocly.yaml";
 
       const options = getOptions();
 
       expect(options).toEqual({
         input: "custom/spec.yaml",
-        output: "custom/dist/openapi",
         format: "json",
-        configPath: "custom/config.yaml",
+        configPath: "custom/redocly.yaml",
       });
     });
   });
 
-  describe("bundle", () => {
+  describe("lint", () => {
     beforeEach(() => {
-      vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(execSync).mockReturnValue(Buffer.from(""));
     });
 
     it("should call execSync with correct default parameters", () => {
-      bundle();
+      lint();
 
       expect(execSync).toHaveBeenCalledWith(
-        "npx --no @redocly/cli bundle openapi/openapi.yaml --output dist/openapi.yaml",
+        "npx --no @redocly/cli lint openapi/openapi.yaml --format codeframe",
         { stdio: "inherit" },
       );
     });
 
-    it("should create output directory before bundling", () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false);
-      const mkdirSpy = vi
-        .spyOn(fs, "mkdirSync")
-        .mockImplementation(() => undefined);
-
-      bundle();
-
-      expect(mkdirSpy).toHaveBeenCalledWith("dist", { recursive: true });
-    });
-
     it("should use custom environment variables", () => {
-      process.env.OPENAPI_INPUT = "custom/input.yaml";
-      process.env.OPENAPI_OUTPUT = "custom/dist/openapi";
+      process.env.OPENAPI_INPUT = "api/spec.yaml";
       process.env.OPENAPI_FORMAT = "json";
-      process.env.OPENAPI_CONFIG = "custom/config.yaml";
 
-      bundle();
+      lint();
 
-      const command = vi.mocked(execSync).mock.calls[0][0];
-      expect(command).toContain("custom/input.yaml");
-      expect(command).toContain("custom/dist/openapi.json");
-      expect(command).toContain("--config custom/config.yaml");
+      expect(execSync).toHaveBeenCalledWith(
+        "npx --no @redocly/cli lint api/spec.yaml --format json",
+        { stdio: "inherit" },
+      );
     });
 
     it("should include --config flag when configPath is set", () => {
       process.env.OPENAPI_CONFIG = ".config/redocly.yaml";
 
-      bundle();
+      lint();
 
       const command = vi.mocked(execSync).mock.calls[0][0] as string;
       expect(command).toContain("--config .config/redocly.yaml");
     });
 
     it("should not include --config flag when configPath is not set", () => {
-      bundle();
+      lint();
 
       const command = vi.mocked(execSync).mock.calls[0][0] as string;
       expect(command).not.toContain("--config");
     });
 
-    it("should exit with status 1 when bundling fails", () => {
+    it("should exit with status 1 when linting fails", () => {
       const mockExit = vi
         .spyOn(process, "exit")
         .mockImplementation(() => undefined as never);
       const mockError = vi.spyOn(console, "error").mockImplementation(() => {});
 
       vi.mocked(execSync).mockImplementation(() => {
-        throw new Error("Bundling failed");
+        throw new Error("Lint failed");
       });
 
-      bundle();
+      lint();
 
       expect(mockExit).toHaveBeenCalledWith(1);
-      expect(mockError).toHaveBeenCalledWith("❌ Bundling failed!");
+      expect(mockError).toHaveBeenCalledWith("❌ Linting failed!");
 
       mockExit.mockRestore();
       mockError.mockRestore();

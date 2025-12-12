@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildDocs } from "../src/lib/redocly/build-docs.js";
+import { buildDocs } from "../../src/lib/redocly/build-docs.js";
 
 describe("Build Docs Integration Tests", () => {
   const originalEnv = process.env;

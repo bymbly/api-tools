@@ -17,6 +17,6 @@
     "noEmitOnError": true,
     "sourceMap": true
   },
-  "include": ["src/**/*", "test/bundle.test.ts", "test/utils.test.ts"],
+  "include": ["src/**/*", "test/redocly/bundle.test.ts", "test/utils.test.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }
