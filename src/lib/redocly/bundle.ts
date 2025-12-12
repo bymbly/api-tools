@@ -1,5 +1,5 @@
 import { execSync } from "child_process";
-import { createPath, createValidator } from "./utils.js";
+import { createPath, createValidator } from "../utils.js";
 
 const VALID_FORMATS = ["json", "yaml"] as const;
 export type Format = (typeof VALID_FORMATS)[number];

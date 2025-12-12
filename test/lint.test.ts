@@ -1,6 +1,6 @@
 import { execSync } from "child_process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getOptions, lint } from "../src/lib/lint.js";
+import { getOptions, lint } from "../src/lib/redocly/lint.js";
 
 vi.mock("child_process");
 
@@ -35,8 +35,8 @@ describe("Lint Functions", () => {
       expect(options.input).toBe("api/spec.yaml");
     });
 
-    it("should use OPENAPI_LINT_FORMAT env var when set", () => {
-      process.env.OPENAPI_LINT_FORMAT = "github-actions";
+    it("should use OPENAPI_FORMAT env var when set", () => {
+      process.env.OPENAPI_FORMAT = "github-actions";
 
       const options = getOptions();
 
@@ -51,8 +51,8 @@ describe("Lint Functions", () => {
       expect(options.configPath).toBe(".config/redocly.yaml");
     });
 
-    it("should default to codeframe format when OPENAPI_LINT_FORMAT is invalid", () => {
-      process.env.OPENAPI_LINT_FORMAT = "invalid-format";
+    it("should default to codeframe format when OPENAPI_FORMAT is invalid", () => {
+      process.env.OPENAPI_FORMAT = "invalid-format";
 
       const options = getOptions();
 
@@ -61,7 +61,7 @@ describe("Lint Functions", () => {
 
     it("should handle all environment variables together", () => {
       process.env.OPENAPI_INPUT = "custom/spec.yaml";
-      process.env.OPENAPI_LINT_FORMAT = "json";
+      process.env.OPENAPI_FORMAT = "json";
       process.env.OPENAPI_CONFIG = "custom/redocly.yaml";
 
       const options = getOptions();
@@ -90,7 +90,7 @@ describe("Lint Functions", () => {
 
     it("should use custom environment variables", () => {
       process.env.OPENAPI_INPUT = "api/spec.yaml";
-      process.env.OPENAPI_LINT_FORMAT = "json";
+      process.env.OPENAPI_FORMAT = "json";
 
       lint();
 

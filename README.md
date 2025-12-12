@@ -38,12 +38,20 @@ See:
 
 Configure via the following environment variables:
 
-`OPENAPI_INPUT` - File to process (**default**: `./openapi/openapi.yaml`)
+`OPENAPI_INPUT` - File to process
 
-`OPENAPI_OUTPUT` - Where to write output file (**default**: `./dist/openapi.yaml`)
+- **default** `redocly-*` - `./openapi/openapi.yaml`
 
-`OPENAPI_FORMAT` - Output format (**default**: `yaml`)
+`OPENAPI_OUTPUT` - Where to write output file
 
-`OPENAPI_LINT_FORMAT` - Linter report format (**default**: `codeframe`)
+- **default** `redocly-bundle` - `./dist/openapi.yaml`
+- **default** `redocly-build-docs` - `./dist/openapi.html`
 
-`OPENAPI_CONFIG_PATH` - Path to redocly.yaml (**default**: `./redocly.yaml`)
+`OPENAPI_FORMAT` - Output format
+
+- **default** `redocly-bundle` - `yaml`
+- **default** `redocly-lint` - `codeframe`
+
+`OPENAPI_CONFIG_PATH` - Path to redocly.yaml
+
+- **default** `redocly-*` - `none` or `./redocly.yaml`

@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bundle } from "../src/lib/bundle";
+import { bundle } from "../src/lib/redocly/bundle";
 
 describe("Bundle Integration Tests", () => {
   const originalEnv = process.env;
@@ -39,7 +39,7 @@ describe("Bundle Integration Tests", () => {
       const bundled = fs.readFileSync("dist/openapi.yaml", "utf-8");
 
       expect(bundled).toContain("openapi: 3.1.1");
-      expect(bundled).toContain("title: Test API");
+      expect(bundled).toContain("title: Simple Test API");
       expect(bundled).toContain("/test:");
 
       expect(bundled).toMatchSnapshot();
@@ -56,7 +56,7 @@ describe("Bundle Integration Tests", () => {
 
       const parsed = JSON.parse(bundled);
       expect(parsed.openapi).toBe("3.1.1");
-      expect(parsed.info.title).toBe("Test API");
+      expect(parsed.info.title).toBe("Simple Test API");
       expect(parsed.paths["/test"]).toBeDefined();
 
       expect(bundled).toMatchSnapshot();
