@@ -1,0 +1,26 @@
+name: OpenAPI Tools
+
+on:
+  push:
+    branches:
+      - main
+      - renovate/**
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prettier-format-check:
+    name: Format Check
+    uses: bymbly/gha-workflows/.github/workflows/prettier-format-check.yaml@main
+
+  markdown-lint-check:
+    name: Lint Check
+    uses: bymbly/gha-workflows/.github/workflows/markdown-lint-check.yaml@main
+
+  npm-test:
+    name: npm Test
+    uses: bymbly/gha-workflows/.github/workflows/npm-test.yaml@main
