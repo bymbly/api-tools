@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { lint } from "../src/lib/redocly/lint";
+import { lint } from "../../src/lib/redocly/lint";
 
 describe("Lint Integration Tests", () => {
   const originalEnv = process.env;

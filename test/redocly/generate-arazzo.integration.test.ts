@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildDocs } from "../src/lib/redocly/build-docs.js";
+import { generateArazzo } from "../../src/lib/redocly/generate-arazzo.js";
 
-describe("Build Docs Integration Tests", () => {
+describe("Generate Arazzo Integration Tests", () => {
   const originalEnv = process.env;
   const originalCwd = process.cwd();
   let tempDir: string;
@@ -21,7 +21,7 @@ describe("Build Docs Integration Tests", () => {
   });
 
   describe("valid specs", () => {
-    it("should build docs for simple spec", () => {
+    it("should generate Arazzo workflows for simple spec", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -30,17 +30,20 @@ describe("Build Docs Integration Tests", () => {
         },
       );
 
-      buildDocs();
+      generateArazzo();
 
-      expect(fs.existsSync("dist/openapi.html")).toBe(true);
+      expect(fs.existsSync("dist/auto-generated.arazzo.yaml")).toBe(true);
 
-      const html = fs.readFileSync("dist/openapi.html", "utf-8");
+      const arazzoYaml = fs.readFileSync(
+        "dist/auto-generated.arazzo.yaml",
+        "utf-8",
+      );
 
-      expect(html).toContain("<!DOCTYPE html>");
-      expect(html).toContain("Simple Test API");
+      expect(arazzoYaml).toContain("workflows:");
+      expect(arazzoYaml).toContain("Simple Test API");
     });
 
-    it("should build docs for spec with references", () => {
+    it("should generate Arazzo workflows for spec with references", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/valid/spec-with-refs"),
         path.join(tempDir, "openapi"),
@@ -49,15 +52,17 @@ describe("Build Docs Integration Tests", () => {
         },
       );
 
-      buildDocs();
+      generateArazzo();
 
-      expect(fs.existsSync("dist/openapi.html")).toBe(true);
+      expect(fs.existsSync("dist/auto-generated.arazzo.yaml")).toBe(true);
 
-      const html = fs.readFileSync("dist/openapi.html", "utf-8");
+      const arazzoYaml = fs.readFileSync(
+        "dist/auto-generated.arazzo.yaml",
+        "utf-8",
+      );
 
-      expect(html).toContain("<!DOCTYPE html>");
-      expect(html).toContain("Test API with References");
-      expect(html).toContain("TestSchema");
+      expect(arazzoYaml).toContain("workflows:");
+      expect(arazzoYaml).toContain("Test API with References");
     });
   });
 
@@ -69,7 +74,7 @@ describe("Build Docs Integration Tests", () => {
         .spyOn(process, "exit")
         .mockImplementation(() => undefined as never);
 
-      buildDocs();
+      generateArazzo();
 
       expect(mockExit).toHaveBeenCalledWith(1);
       mockExit.mockRestore();
@@ -77,21 +82,21 @@ describe("Build Docs Integration Tests", () => {
   });
 
   describe("custom configurations", () => {
-    it("should build docs with custom input path", () => {
+    it("should generate Arazzo workflows with custom input path", () => {
       fs.mkdirSync(path.join(tempDir, "custom"));
       fs.copyFileSync(
         path.join(originalCwd, "test/fixtures/valid/simple-spec/openapi.yaml"),
-        path.join(tempDir, "custom/spec.yaml"),
+        path.join(tempDir, "custom", "spec.yaml"),
       );
 
       process.env.OPENAPI_INPUT = "custom/spec.yaml";
 
-      buildDocs();
+      generateArazzo();
 
-      expect(fs.existsSync("dist/openapi.html")).toBe(true);
+      expect(fs.existsSync("dist/auto-generated.arazzo.yaml")).toBe(true);
     });
 
-    it("should build docs with custom output path", () => {
+    it("should generate Arazzo workflows with custom output path", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -100,29 +105,11 @@ describe("Build Docs Integration Tests", () => {
         },
       );
 
-      process.env.OPENAPI_OUTPUT = "custom-dist/docs.html";
+      process.env.OPENAPI_OUTPUT = "custom-dist/custom.arazzo.yaml";
 
-      buildDocs();
+      generateArazzo();
 
-      expect(fs.existsSync("custom-dist/docs.html")).toBe(true);
-      expect(fs.existsSync("dist/openapi.html")).toBe(false);
-    });
-
-    it("should build docs with custom config path", () => {
-      fs.cpSync(
-        path.join(originalCwd, "test/fixtures/valid/simple-spec"),
-        path.join(tempDir, "openapi"),
-        {
-          recursive: true,
-        },
-      );
-
-      process.env.OPENAPI_CONFIG = path.join(
-        originalCwd,
-        "test/fixtures/redocly.yaml",
-      );
-
-      expect(() => buildDocs()).not.toThrow();
+      expect(fs.existsSync("custom-dist/custom.arazzo.yaml")).toBe(true);
     });
   });
 });
