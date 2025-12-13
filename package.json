@@ -2,10 +2,15 @@
   "name": "@bymbly/openapi-tools",
   "version": "1.0.0",
   "description": "Shared Tooling for OpenAPI Specs",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "keywords": [
+    "openapi",
+    "redocly",
+    "cli",
+    "tools",
+    "api"
+  ],
   "files": [
-    "dist"
+    "dist/**/*"
   ],
   "repository": {
     "type": "git",
@@ -27,7 +32,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:update": "vitest --update"
+    "test:update": "vitest --update",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "npm run lint:md",
+    "lint:check": "npm run lint:md:check",
+    "lint:md": "markdownlint-cli2 --fix",
+    "lint:md:check": "markdownlint-cli2",
+    "clean:dist": "rm -rf ./dist"
   },
   "dependencies": {
     "@redocly/cli": "^2.12.3",
