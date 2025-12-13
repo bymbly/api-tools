@@ -24,3 +24,14 @@ jobs:
   npm-test:
     name: npm Test
     uses: bymbly/gha-workflows/.github/workflows/npm-test.yaml@main
+
+  publish-npm-package:
+    name: Publish NPM Package
+    needs: [prettier-format-check, markdown-lint-check, npm-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+      packages: write
+      issues: write
+      pull-requests: write
+    uses: bymbly/gha-workflows/.github/workflows/npm-semantic-release.yaml@main
