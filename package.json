@@ -1,7 +1,8 @@
 {
   "name": "@bymbly/openapi-tools",
   "version": "1.0.0",
-  "description": "Shared Tooling for OpenAPI Specs",
+  "description": "Standardized CLI tooling for OpenAPI specifications",
+  "license": "Apache-2.0",
   "keywords": [
     "openapi",
     "redocly",
