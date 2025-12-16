@@ -23,7 +23,7 @@ describe("Lint Integration Tests", () => {
   describe("valid specs", () => {
     it("should pass for simple valid spec", () => {
       fs.cpSync(
-        path.join(originalCwd, "test/fixtures/valid/simple-spec"),
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         {
           recursive: true,
@@ -35,7 +35,7 @@ describe("Lint Integration Tests", () => {
 
     it("should pass for spec with references", () => {
       fs.cpSync(
-        path.join(originalCwd, "test/fixtures/valid/spec-with-refs"),
+        path.join(originalCwd, "test/fixtures/openapi/valid/spec-with-refs"),
         path.join(tempDir, "openapi"),
         {
           recursive: true,
@@ -49,7 +49,7 @@ describe("Lint Integration Tests", () => {
   describe("invalid specs", () => {
     it("should fail invalid spec", () => {
       fs.cpSync(
-        path.join(originalCwd, "test/fixtures/invalid/broken-spec"),
+        path.join(originalCwd, "test/fixtures/openapi/invalid/broken-spec"),
         path.join(tempDir, "openapi"),
         {
           recursive: true,
@@ -84,7 +84,10 @@ describe("Lint Integration Tests", () => {
     it("should work with custom input path", () => {
       fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
       fs.copyFileSync(
-        path.join(originalCwd, "test/fixtures/valid/simple-spec/openapi.yaml"),
+        path.join(
+          originalCwd,
+          "test/fixtures/openapi/valid/simple-spec/openapi.yaml",
+        ),
         path.join(tempDir, "custom/spec.yaml"),
       );
 
@@ -95,7 +98,7 @@ describe("Lint Integration Tests", () => {
 
     it("should work with custom config path", () => {
       fs.cpSync(
-        path.join(originalCwd, "test/fixtures/valid/simple-spec"),
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         {
           recursive: true,
