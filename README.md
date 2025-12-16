@@ -42,6 +42,7 @@ Add to your `package.json`:
     "lint": "redocly-lint",
     "docs": "redocly-build-docs",
     "arazzo": "redocly-generate-arazzo",
+    "respect": "redocly-respect",
     "validate": "npm run lint && npm run bundle && npm run docs"
   }
 }
@@ -54,6 +55,7 @@ npm run bundle # Bundles openapi/openapi.yaml -> dist/openapi.yaml
 npm run lint # Lints openapi/openapi.yaml
 npm run docs # Generates dist/openapi.html
 npm run arazzo # Generates dist/auto-generated.arazzo.yaml
+npm run respect # Tests arazzo/*.arazzo.yaml workflows
 ```
 
 ## Available Commands
@@ -68,6 +70,7 @@ npm run arazzo # Generates dist/auto-generated.arazzo.yaml
 | `redocly-lint`            | Lint OpenAPI specs                       | `openapi/openapi.yaml` | terminal output                   |
 | `redocly-build-docs`      | Generate HTML documentation              | `openapi/openapi.yaml` | `dist/openapi.html`               |
 | `redocly-generate-arazzo` | Generate Arazzo workflow descriptions    | `openapi/openapi.yaml` | `dist/auto-generated.arazzo.yaml` |
+| `redocly-respect`         | Test Arazzo workflows                    | `arazzo/*.arazzo.yaml` | terminal output                   |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -131,6 +134,119 @@ Path to Redocly configuration file.
 ```bash
 OPENAPI_CONFIG=.config/redocly.yaml redocly-lint
 ```
+
+### `ARAZZO_INPUT`
+
+Path to your Arazzo workflow(s). Supports glob patterns.
+
+**Default:** `arazzo/*.arazzo.yaml`
+
+**Example:**
+
+```bash
+ARAZZO_INPUT=api/arazzo.yaml redocly-respect
+```
+
+### `ARAZZO_VERBOSE`
+
+Set to `true` for verbose output.
+
+**Default:** `false`
+
+**Example:**
+
+```bash
+ARAZZO_VERBOSE=true redocly-respect
+```
+
+### `ARAZZO_HAR_OUTPUT`
+
+HAR file output path (for debugging HTTP traffic).
+
+**Default:** none
+
+**Example:**
+
+```bash
+ARAZZO_HAR_OUTPUT=logs/arazzo.har redocly-respect
+```
+
+### `ARAZZO_JSON_OUTPUT`
+
+JSON file output path (for debugging).
+
+**Default:** none
+
+**Example:**
+
+```bash
+ARAZZO_JSON_OUTPUT=logs/arazzo.json redocly-respect
+```
+
+## Redocly's Native Environment Variables
+
+Some Redocly command support native environment variables for advanced configuration:
+
+### `REDOCLY_CLI_RESPECT_INPUT`
+
+Input parameters as JSON or key=value pairs.
+
+**Example:**
+
+```bash
+REDOCLY_CLI_RESPECT_INPUT='userEmail=name@redocly.com,userPassword=12345' redocly-respect
+REDOCLY_CLI_RESPECT_INPUT='{"key":"value","nested":{"nestedKey":"nestedValue"}}' redocly-respect
+```
+
+[Redocly `respect` Documentation](https://redocly.com/docs/cli/commands/respect)
+
+### `REDOCLY_CLI_RESPECT_SERVER`
+
+Server overrides.
+
+**Example:**
+
+```bash
+REDOCLY_CLI_RESPECT_SERVER="sourceDescriptionName1=https://example.com" redocly-respect
+```
+
+[Redocly `respect` Documentation](https://redocly.com/docs/cli/commands/respect)
+
+### `REDOCLY_CLI_RESPECT_MAX_STEPS`
+
+Maximum number of steps to run.
+
+**Example:**
+
+```bash
+REDOCLY_CLI_RESPECT_MAX_STEPS=50 redocly-respect
+```
+
+[Redocly `respect` Documentation](https://redocly.com/docs/cli/commands/respect)
+
+### `REDOCLY_CLI_RESPECT_MAX_FETCH_TIMEOUT`
+
+Maximum time to wait for API response per request in milliseconds.
+
+**Example:**
+
+```bash
+REDOCLY_CLI_RESPECT_MAX_FETCH_TIMEOUT=60000 redocly-respect
+```
+
+[Redocly `respect` Documentation](https://redocly.com/docs/cli/commands/respect)
+
+### `REDOCLY_CLI_RESPECT_EXECUTION_TIMEOUT`
+
+Maximum time to wait for `respect` command execution in milliseconds.
+
+**Example:**
+
+```bash
+REDOCLY_CLI_RESPECT_EXECUTION_TIMEOUT=1800000 redocly-respect
+```
+
+[Redocly `respect` Documentation](https://redocly.com/docs/cli/commands/respect)
 
 ## Contributing
 
