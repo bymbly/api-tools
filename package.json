@@ -24,7 +24,8 @@
     "redocly-bundle": "./dist/bin/redocly/bundle.js",
     "redocly-lint": "./dist/bin/redocly/lint.js",
     "redocly-build-docs": "./dist/bin/redocly/build-docs.js",
-    "redocly-generate-arazzo": "./dist/bin/redocly/generate-arazzo.js"
+    "redocly-generate-arazzo": "./dist/bin/redocly/generate-arazzo.js",
+    "redocly-respect": "./dist/bin/redocly/respect.js"
   },
   "scripts": {
     "build": "tsc",

@@ -23,7 +23,7 @@ describe("Build Docs Integration Tests", () => {
   describe("valid specs", () => {
     it("should build docs for simple spec", () => {
       fs.cpSync(
-        path.join(originalCwd, "test/fixtures/valid/simple-spec"),
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         {
           recursive: true,
@@ -42,7 +42,7 @@ describe("Build Docs Integration Tests", () => {
 
     it("should build docs for spec with references", () => {
       fs.cpSync(
-        path.join(originalCwd, "test/fixtures/valid/spec-with-refs"),
+        path.join(originalCwd, "test/fixtures/openapi/valid/spec-with-refs"),
         path.join(tempDir, "openapi"),
         {
           recursive: true,
@@ -80,7 +80,10 @@ describe("Build Docs Integration Tests", () => {
     it("should build docs with custom input path", () => {
       fs.mkdirSync(path.join(tempDir, "custom"));
       fs.copyFileSync(
-        path.join(originalCwd, "test/fixtures/valid/simple-spec/openapi.yaml"),
+        path.join(
+          originalCwd,
+          "test/fixtures/openapi/valid/simple-spec/openapi.yaml",
+        ),
         path.join(tempDir, "custom/spec.yaml"),
       );
 
@@ -93,7 +96,7 @@ describe("Build Docs Integration Tests", () => {
 
     it("should build docs with custom output path", () => {
       fs.cpSync(
-        path.join(originalCwd, "test/fixtures/valid/simple-spec"),
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         {
           recursive: true,
@@ -110,7 +113,7 @@ describe("Build Docs Integration Tests", () => {
 
     it("should build docs with custom config path", () => {
       fs.cpSync(
-        path.join(originalCwd, "test/fixtures/valid/simple-spec"),
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         {
           recursive: true,
