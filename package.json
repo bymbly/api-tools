@@ -25,12 +25,14 @@
     "redocly-lint": "./dist/bin/redocly/lint.js",
     "redocly-build-docs": "./dist/bin/redocly/build-docs.js",
     "redocly-generate-arazzo": "./dist/bin/redocly/generate-arazzo.js",
-    "redocly-respect": "./dist/bin/redocly/respect.js"
+    "redocly-respect": "./dist/bin/redocly/respect.js",
+    "spectral-lint": "./dist/bin/spectral/lint.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run clean:dist && tsc && npm run copy:defaults",
     "watch": "tsc --watch",
     "prepublishOnly": "npm run build",
+    "copy:defaults": "copyfiles --all --up 1 src/defaults/* dist/",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -50,6 +52,7 @@
   "devDependencies": {
     "@types/node": "^24.10.1",
     "@vitest/ui": "^4.0.15",
+    "copyfiles": "^2.4.1",
     "markdownlint-cli2": "0.20.0",
     "prettier": "3.7.4",
     "typescript": "^5.9.3",
