@@ -2,9 +2,14 @@ openapi: 3.1.1
 info:
   title: Simple Test API
   version: 1.0.0
+  description: A simple test API
   license:
     name: example.dev
-    url: example.dev
+    url: https://example.dev
+  contact:
+    name: API Support
+    url: https://www.example.dev/support
+    email: support@example.dev
 
 servers:
   - url: example.dev
@@ -12,11 +17,18 @@ servers:
 security:
   - BearerToken: []
 
+tags:
+  - name: Example Tag
+    description: An example tag
+
 paths:
   /test:
     get:
       operationId: getTest
       summary: Test endpoint
+      description: A simple test endpoint
+      tags:
+        - Example Tag
       responses:
         "200":
           description: Success
