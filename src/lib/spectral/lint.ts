@@ -21,12 +21,17 @@ export type LintFormat = (typeof VALID_FORMATS)[number];
 const VALID_FAIL_SEVERITIES = ["error", "warn", "info", "hint"] as const;
 export type FailSeverity = (typeof VALID_FAIL_SEVERITIES)[number];
 
+interface Ruleset {
+  path?: string;
+  source: "env" | "bundled" | "local";
+}
+
 export interface LintOptions {
   input: string;
   format: LintFormat;
   output?: string;
-  ruleset?: string;
-  failSeverity?: FailSeverity;
+  ruleset: Ruleset;
+  failSeverity: FailSeverity;
   displayOnlyFailures: boolean;
   verbose: boolean;
 }
@@ -51,18 +56,7 @@ export function getOptions(): LintOptions {
       ? failSeverityEnv
       : "warn"; // be more strict than cli default
 
-  // if the user hasn't specified a ruleset, check for local config files
-  let ruleset = process.env.OPENAPI_CONFIG;
-  if (!ruleset) {
-    const hasLocalConfig = fs
-      .readdirSync(".")
-      .some((file) => SPECTRAL_RULESET_REGEX.test(file));
-
-    // if no local config files, use our default ruleset
-    if (!hasLocalConfig) {
-      ruleset = path.join(__dirname, "../../defaults/spectral.yaml");
-    }
-  }
+  const ruleset = getRuleset();
 
   return {
     input: process.env.OPENAPI_INPUT || "openapi/openapi.yaml",
@@ -75,26 +69,26 @@ export function getOptions(): LintOptions {
   };
 }
 
-export function lint() {
-  const options = getOptions();
+function getRuleset(): Ruleset {
+  const env = process.env.OPENAPI_CONFIG;
+  if (env) return { path: env, source: "env" };
 
-  console.log(`🔍 Linting OpenAPI spec...`);
-  console.log(`   Input: ${options.input}`);
-  console.log(`   Format: ${options.format}`);
-  console.log(`   Config: ${options.ruleset || "local spectral config"}`);
-  if (options.output) {
-    console.log(`   Output: ${options.output}`);
-  }
-  console.log(`   Fail Severity: ${options.failSeverity}`);
-  console.log(
-    `   Display Only Failures: ${options.displayOnlyFailures ? "true" : "false"}`,
-  );
-  console.log(`   Verbose: ${options.verbose ? "true" : "false"}`);
+  const hasLocal = fs
+    .readdirSync(".")
+    .some((f) => SPECTRAL_RULESET_REGEX.test(f));
+  if (hasLocal) return { path: undefined, source: "local" };
 
+  return {
+    path: path.join(__dirname, "../../../defaults/spectral.yaml"),
+    source: "bundled",
+  };
+}
+
+function getCommand(options: LintOptions): string {
   let command = `npx --no @stoplight/spectral-cli lint ${options.input} --format ${options.format} --fail-severity ${options.failSeverity}`;
 
-  if (options.ruleset) {
-    command += ` --ruleset ${options.ruleset}`;
+  if (options.ruleset.path) {
+    command += ` --ruleset ${options.ruleset.path}`;
   }
 
   if (options.output) {
@@ -109,8 +103,33 @@ export function lint() {
     command += ` --verbose`;
   }
 
+  return command;
+}
+
+export function lint() {
+  const options = getOptions();
+
+  console.log(`🔍 Linting OpenAPI spec...`);
+  console.log(`   Input: ${options.input}`);
+  console.log(`   Format: ${options.format}`);
+  console.log(
+    `   Config: ${options.ruleset.path ?? "auto"} (${options.ruleset.source})`,
+  );
+  if (options.output) {
+    console.log(`   Output: ${options.output}`);
+  }
+  console.log(`   Fail Severity: ${options.failSeverity}`);
+  console.log(
+    `   Display Only Failures: ${options.displayOnlyFailures ? "true" : "false"}`,
+  );
+  console.log(`   Verbose: ${options.verbose ? "true" : "false"}`);
+
+  const command = getCommand(options);
+
+  const stdio = process.env.SPECTRAL_STDIO === "silent" ? "ignore" : "inherit";
+
   try {
-    execSync(command, { stdio: "inherit" });
+    execSync(command, { stdio });
 
     console.log(`✅ Linting completed successfully.`);
   } catch (error) {

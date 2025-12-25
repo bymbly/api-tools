@@ -6,9 +6,15 @@ exports[`Bundle Integration Tests > simple spec without references > should bund
   "info": {
     "title": "Simple Test API",
     "version": "1.0.0",
+    "description": "A simple test API",
     "license": {
       "name": "example.dev",
-      "url": "example.dev"
+      "url": "https://example.dev"
+    },
+    "contact": {
+      "name": "API Support",
+      "url": "https://www.example.dev/support",
+      "email": "support@example.dev"
     }
   },
   "servers": [
@@ -21,11 +27,21 @@ exports[`Bundle Integration Tests > simple spec without references > should bund
       "BearerToken": []
     }
   ],
+  "tags": [
+    {
+      "name": "Example Tag",
+      "description": "An example tag"
+    }
+  ],
   "paths": {
     "/test": {
       "get": {
         "operationId": "getTest",
         "summary": "Test endpoint",
+        "description": "A simple test endpoint",
+        "tags": [
+          "Example Tag"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -69,18 +85,29 @@ exports[`Bundle Integration Tests > simple spec without references > should bund
 info:
   title: Simple Test API
   version: 1.0.0
+  description: A simple test API
   license:
     name: example.dev
-    url: example.dev
+    url: https://example.dev
+  contact:
+    name: API Support
+    url: https://www.example.dev/support
+    email: support@example.dev
 servers:
   - url: example.dev
 security:
   - BearerToken: []
+tags:
+  - name: Example Tag
+    description: An example tag
 paths:
   /test:
     get:
       operationId: getTest
       summary: Test endpoint
+      description: A simple test endpoint
+      tags:
+        - Example Tag
       responses:
         '200':
           description: Success
@@ -110,9 +137,15 @@ exports[`Bundle Integration Tests > spec with $ref references > should produce v
   "info": {
     "title": "Test API with References",
     "version": "1.0.0",
+    "description": "A simple test API with references",
     "license": {
       "name": "example.dev",
-      "url": "example.dev"
+      "url": "https://example.dev"
+    },
+    "contact": {
+      "name": "API Support",
+      "url": "https://www.example.dev/support",
+      "email": "support@example.dev"
     }
   },
   "servers": [
@@ -125,11 +158,21 @@ exports[`Bundle Integration Tests > spec with $ref references > should produce v
       "BearerToken": []
     }
   ],
+  "tags": [
+    {
+      "name": "Example Tag",
+      "description": "An example tag"
+    }
+  ],
   "paths": {
     "/test": {
       "get": {
         "operationId": "getTest",
         "summary": "Test endpoint",
+        "description": "A simple test endpoint",
+        "tags": [
+          "Example Tag"
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -178,18 +221,29 @@ exports[`Bundle Integration Tests > spec with $ref references > should resolve a
 info:
   title: Test API with References
   version: 1.0.0
+  description: A simple test API with references
   license:
     name: example.dev
-    url: example.dev
+    url: https://example.dev
+  contact:
+    name: API Support
+    url: https://www.example.dev/support
+    email: support@example.dev
 servers:
   - url: example.dev
 security:
   - BearerToken: []
+tags:
+  - name: Example Tag
+    description: An example tag
 paths:
   /test:
     get:
       operationId: getTest
       summary: Test endpoint
+      description: A simple test endpoint
+      tags:
+        - Example Tag
       responses:
         '200':
           description: Success
