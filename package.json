@@ -32,7 +32,7 @@
     "build": "npm run clean:dist && tsc && npm run copy:defaults",
     "watch": "tsc --watch",
     "prepublishOnly": "npm run build",
-    "copy:defaults": "copyfiles --all --up 1 src/defaults/* dist/",
+    "copy:defaults": "copyfiles --all defaults/* dist/",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
