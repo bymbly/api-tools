@@ -1,5 +1,5 @@
 import { execSync } from "child_process";
-import { createPath } from "../utils";
+import { createPath } from "../utils.js";
 
 export interface GenerateArazzoOptions {
   input: string;
