@@ -1,7 +1,7 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { lint } from "../../src/lib/spectral/lint";
+import { lint } from "../../src/lib/spectral/lint.js";
 
 describe("Lint Integration Tests", () => {
   const originalEnv = process.env;
@@ -113,13 +113,7 @@ describe("Lint Integration Tests", () => {
         },
       );
 
-      const exitError = new Error("Exit");
-      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-        throw exitError;
-      });
-
-      expect(() => lint()).toThrowError(exitError);
-      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(lint()).not.toBe(0);
     });
   });
 

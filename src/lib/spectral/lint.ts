@@ -1,7 +1,14 @@
-import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
-import { createValidator } from "../utils";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import { createRequire } from "node:module";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { createValidator } from "../utils.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const nodeRequire = createRequire(import.meta.url);
 
 const VALID_FORMATS = [
   "json",
@@ -45,6 +52,11 @@ export const isValidFailSeverity = failSeverityValidator.isValid;
 // https://github.com/stoplightio/spectral/blob/develop/packages/core/src/ruleset/ruleset.ts#L24
 const SPECTRAL_RULESET_REGEX = /^\.?spectral\.(ya?ml|json|m?js)$/;
 
+const defaultRulesetPath = path.join(
+  __dirname,
+  "../../../defaults/spectral.yaml",
+);
+
 export function getOptions(): LintOptions {
   const formatEnv = process.env.SPECTRAL_FORMAT;
   const format =
@@ -69,44 +81,61 @@ export function getOptions(): LintOptions {
   };
 }
 
+function hasLocalRuleset(): boolean {
+  try {
+    return fs
+      .readdirSync(process.cwd(), { withFileTypes: true })
+      .some((f) => f.isFile() && SPECTRAL_RULESET_REGEX.test(f.name));
+  } catch {
+    return false;
+  }
+}
+
 function getRuleset(): Ruleset {
   const env = process.env.OPENAPI_CONFIG;
   if (env) return { path: env, source: "env" };
 
-  const hasLocal = fs
-    .readdirSync(".")
-    .some((f) => SPECTRAL_RULESET_REGEX.test(f));
-  if (hasLocal) return { path: undefined, source: "local" };
+  if (hasLocalRuleset()) return { path: undefined, source: "local" };
 
   return {
-    path: path.join(__dirname, "../../../defaults/spectral.yaml"),
+    path: defaultRulesetPath,
     source: "bundled",
   };
 }
 
-function getCommand(options: LintOptions): string {
-  let command = `npx --no @stoplight/spectral-cli lint ${options.input} --format ${options.format} --fail-severity ${options.failSeverity}`;
+function getArgs(options: LintOptions): string[] {
+  const args = [
+    "lint",
+    options.input,
+    "--format",
+    options.format,
+    "--fail-severity",
+    options.failSeverity,
+  ];
 
-  if (options.ruleset.path) {
-    command += ` --ruleset ${options.ruleset.path}`;
-  }
+  if (options.ruleset.path) args.push("--ruleset", options.ruleset.path);
+  if (options.output) args.push("--output", options.output);
+  if (options.displayOnlyFailures) args.push("--display-only-failures");
+  if (options.verbose) args.push("--verbose");
 
-  if (options.output) {
-    command += ` --output ${options.output}`;
-  }
-
-  if (options.displayOnlyFailures) {
-    command += ` --display-only-failures`;
-  }
-
-  if (options.verbose) {
-    command += ` --verbose`;
-  }
-
-  return command;
+  return args;
 }
 
-export function lint() {
+function runSpectral(args: string[], stdio: "inherit" | "ignore") {
+  const spectralBin = nodeRequire.resolve(
+    "@stoplight/spectral-cli/dist/index.js",
+  );
+
+  const res = spawnSync(process.execPath, [spectralBin, ...args], {
+    stdio,
+    env: process.env,
+  });
+
+  if (res.error) throw res.error;
+  return res.status ?? 0;
+}
+
+export function lint(): number {
   const options = getOptions();
 
   console.log(`🔍 Linting OpenAPI spec...`);
@@ -119,22 +148,12 @@ export function lint() {
     console.log(`   Output: ${options.output}`);
   }
   console.log(`   Fail Severity: ${options.failSeverity}`);
-  console.log(
-    `   Display Only Failures: ${options.displayOnlyFailures ? "true" : "false"}`,
-  );
-  console.log(`   Verbose: ${options.verbose ? "true" : "false"}`);
+  console.log(`   Display Only Failures: ${options.displayOnlyFailures}`);
+  console.log(`   Verbose: ${options.verbose}`);
 
-  const command = getCommand(options);
+  const args = getArgs(options);
 
   const stdio = process.env.SPECTRAL_STDIO === "silent" ? "ignore" : "inherit";
 
-  try {
-    execSync(command, { stdio });
-
-    console.log(`✅ Linting completed successfully.`);
-  } catch (error) {
-    console.error(`❌ Linting failed.`);
-    console.error(`${error instanceof Error ? error.message : String(error)}`);
-    process.exit(1);
-  }
+  return runSpectral(args, stdio);
 }

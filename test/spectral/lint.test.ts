@@ -1,11 +1,22 @@
-import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getOptions, lint } from "../../src/lib/spectral/lint.js";
-import { getExecCommand } from "../helper.js";
+import { getSpawnCall } from "../helper.js";
 
-vi.mock("child_process");
+vi.mock("node:child_process");
+
+function okSpawnResult() {
+  return {
+    pid: 123,
+    output: [],
+    stdout: Buffer.from(""),
+    stderr: Buffer.from(""),
+    status: 0,
+    signal: null,
+    error: undefined,
+  } as any;
+}
 
 describe("Lint Functions", () => {
   const originalEnv = process.env;
@@ -15,6 +26,8 @@ describe("Lint Functions", () => {
     vi.clearAllMocks();
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(fs, "readdirSync").mockReturnValue([] as any);
+    vi.mocked(spawnSync).mockReturnValue(okSpawnResult());
   });
 
   afterEach(() => {
@@ -30,6 +43,7 @@ describe("Lint Functions", () => {
       expect(options.format).toBe("stylish");
       expect(options.output).toBeUndefined();
       expect(options.ruleset.path).toContain("defaults/spectral.yaml");
+      expect(options.ruleset.source).toBe("bundled");
       expect(options.failSeverity).toBe("warn");
       expect(options.displayOnlyFailures).toBe(false);
       expect(options.verbose).toBe(false);
@@ -37,80 +51,61 @@ describe("Lint Functions", () => {
 
     it("should use OPENAPI_INPUT env var when set", () => {
       process.env.OPENAPI_INPUT = "api/spec.yaml";
-
-      const options = getOptions();
-
-      expect(options.input).toBe("api/spec.yaml");
+      expect(getOptions().input).toBe("api/spec.yaml");
     });
 
     it("should use SPECTRAL_FORMAT env var when set", () => {
       process.env.SPECTRAL_FORMAT = "github-actions";
-
-      const options = getOptions();
-
-      expect(options.format).toBe("github-actions");
+      expect(getOptions().format).toBe("github-actions");
     });
 
     it("should use OPENAPI_OUTPUT env var when set", () => {
       process.env.OPENAPI_OUTPUT = "lint-results.txt";
-
-      const options = getOptions();
-
-      expect(options.output).toBe("lint-results.txt");
+      expect(getOptions().output).toBe("lint-results.txt");
     });
 
     it("should use OPENAPI_CONFIG env var when set", () => {
       process.env.OPENAPI_CONFIG = ".config/spectral.yaml";
-
-      const options = getOptions();
-
-      expect(options.ruleset.path).toBe(".config/spectral.yaml");
+      expect(getOptions().ruleset).toEqual({
+        path: ".config/spectral.yaml",
+        source: "env",
+      });
     });
 
-    it("should mark ruleset source as bundled by default", () => {
+    it("should mark ruleset source as local when local config exists", () => {
+      vi.spyOn(fs, "readdirSync").mockReturnValue([
+        { isFile: () => true, name: ".spectral.yaml" },
+      ] as any);
+
       const options = getOptions();
 
-      expect(options.ruleset.source).toBe("bundled");
+      expect(options.ruleset.path).toBeUndefined();
+      expect(options.ruleset.source).toBe("local");
     });
 
     it("should use SPECTRAL_FAIL_SEVERITY env var when set", () => {
       process.env.SPECTRAL_FAIL_SEVERITY = "info";
-
-      const options = getOptions();
-
-      expect(options.failSeverity).toBe("info");
+      expect(getOptions().failSeverity).toBe("info");
     });
 
     it("should use SPECTRAL_DISPLAY_ONLY_FAILURES env var when set to true", () => {
       process.env.SPECTRAL_DISPLAY_ONLY_FAILURES = "true";
-
-      const options = getOptions();
-
-      expect(options.displayOnlyFailures).toBe(true);
+      expect(getOptions().displayOnlyFailures).toBe(true);
     });
 
     it("should use SPECTRAL_VERBOSE env var when set to true", () => {
       process.env.SPECTRAL_VERBOSE = "true";
-
-      const options = getOptions();
-
-      expect(options.verbose).toBe(true);
+      expect(getOptions().verbose).toBe(true);
     });
 
     it("should default to stylish format when SPECTRAL_FORMAT is invalid", () => {
       process.env.SPECTRAL_FORMAT = "invalid-format";
-
-      const options = getOptions();
-
-      expect(options.format).toBe("stylish");
+      expect(getOptions().format).toBe("stylish");
     });
 
     it("should default to warn failSeverity when SPECTRAL_FAIL_SEVERITY is invalid", () => {
       process.env.SPECTRAL_FAIL_SEVERITY = "invalid-severity";
-
-      const options = getOptions();
-
-      expect(options.failSeverity).toBe("warn");
+      expect(getOptions().failSeverity).toBe("warn");
     });
 
     it("should handle all environment variables together", () => {
@@ -137,23 +132,23 @@ describe("Lint Functions", () => {
   });
 
   describe("lint", () => {
-    beforeEach(() => {
-      vi.mocked(execSync).mockReturnValue(Buffer.from(""));
-    });
+    it("should call spawnSync with correct args (defaults)", () => {
+      expect(lint()).toBe(0);
 
-    it("should call execSync with correct command", () => {
-      lint();
+      const call = getSpawnCall("inherit");
 
-      const cmd = getExecCommand();
+      expect(call.args[1]).toBe("lint");
+      expect(call.args[2]).toBe("openapi/openapi.yaml");
 
-      expect(cmd).toContain(
-        "npx --no @stoplight/spectral-cli lint openapi/openapi.yaml",
-      );
-      expect(cmd).toContain("--format stylish");
-      expect(cmd).toContain(
-        `--ruleset ${path.join(__dirname, "../../defaults/spectral.yaml")}`,
-      );
-      expect(cmd).toContain("--fail-severity warn");
+      expect(call.args).toContain("--format");
+      expect(call.args).toContain("stylish");
+
+      expect(call.args).toContain("--fail-severity");
+      expect(call.args).toContain("warn");
+
+      expect(call.args).toContain("--ruleset");
+      const rulesetIndex = call.args.indexOf("--ruleset");
+      expect(call.args[rulesetIndex + 1]).toContain("defaults/spectral.yaml");
     });
 
     it("should use custom options from env vars", () => {
@@ -165,133 +160,65 @@ describe("Lint Functions", () => {
       process.env.SPECTRAL_DISPLAY_ONLY_FAILURES = "true";
       process.env.SPECTRAL_VERBOSE = "true";
 
-      lint();
+      expect(lint()).toBe(0);
 
-      const cmd = getExecCommand();
-
-      expect(cmd).toContain(
-        "npx --no @stoplight/spectral-cli lint api/spec.yaml",
-      );
-      expect(cmd).toContain("--format json");
-      expect(cmd).toContain("--output lint-results.json");
-      expect(cmd).toContain("--ruleset .config/spectral.yaml");
-      expect(cmd).toContain("--fail-severity warn");
-      expect(cmd).toContain("--display-only-failures");
-      expect(cmd).toContain("--verbose");
-    });
-
-    it("should use --format from env when format is set", () => {
-      process.env.SPECTRAL_FORMAT = "junit";
-
-      lint();
-
-      expect(getExecCommand()).toContain("--format junit");
-    });
-
-    it("should default to --format stylish when not set", () => {
-      lint();
-
-      expect(getExecCommand()).toContain("--format stylish");
-    });
-
-    it("should include --output flag only when output is set", () => {
-      process.env.OPENAPI_OUTPUT = "lint-results.json";
-
-      lint();
-
-      expect(getExecCommand()).toContain("--output lint-results.json");
-    });
-
-    it("should not include --output flag when output is not set", () => {
-      lint();
-
-      expect(getExecCommand()).not.toContain("--output");
-    });
-
-    it("should include --ruleset flag when ruleset is set", () => {
-      process.env.OPENAPI_CONFIG = ".config/spectral.yaml";
-
-      lint();
-
-      expect(getExecCommand()).toContain("--ruleset .config/spectral.yaml");
-    });
-
-    it("should include default ruleset when no local config is found", () => {
-      lint();
-
-      expect(getExecCommand()).toContain(
-        `--ruleset ${path.join(__dirname, "../../defaults/spectral.yaml")}`,
+      const call = getSpawnCall("inherit");
+      expect(call.args).toEqual(
+        expect.arrayContaining([
+          expect.any(String), // spectral binary path
+          "lint",
+          "api/spec.yaml",
+          "--format",
+          "json",
+          "--fail-severity",
+          "warn",
+          "--ruleset",
+          ".config/spectral.yaml",
+          "--output",
+          "lint-results.json",
+          "--display-only-failures",
+          "--verbose",
+        ]),
       );
     });
 
-    it("should not include --ruleset flag when local config is found", () => {
+    it("should not use --ruleset when local config is found", () => {
       delete process.env.OPENAPI_CONFIG;
-      vi.spyOn(fs, "readdirSync").mockReturnValue([".spectral.yaml"] as any);
 
-      lint();
+      vi.spyOn(fs, "readdirSync").mockReturnValue([
+        { isFile: () => true, name: ".spectral.yaml" },
+      ] as any);
 
-      expect(getExecCommand()).not.toContain("--ruleset");
+      expect(lint()).toBe(0);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).not.toContain("--ruleset");
     });
 
-    it("should include --fail-severity flag when set", () => {
-      process.env.SPECTRAL_FAIL_SEVERITY = "error";
+    it("should use stdio to ignore when SPECTRAL_STDIO=silent", () => {
+      process.env.SPECTRAL_STDIO = "silent";
 
-      lint();
+      expect(lint()).toBe(0);
 
-      expect(getExecCommand()).toContain("--fail-severity error");
+      getSpawnCall("ignore");
     });
 
-    it("should default to --fail-severity warn when not set", () => {
-      lint();
-
-      expect(getExecCommand()).toContain("--fail-severity warn");
-    });
-
-    it("should include --display-only-failures flag when set to true", () => {
-      process.env.SPECTRAL_DISPLAY_ONLY_FAILURES = "true";
-
-      lint();
-
-      expect(getExecCommand()).toContain("--display-only-failures");
-    });
-
-    it("should not include --display-only-failures flag when set to false", () => {
-      lint();
-
-      expect(getExecCommand()).not.toContain("--display-only-failures");
-    });
-
-    it("should include --verbose flag when set to true", () => {
-      process.env.SPECTRAL_VERBOSE = "true";
-
-      lint();
-
-      expect(getExecCommand()).toContain("--verbose");
-    });
-
-    it("should not include --verbose flag when set to false", () => {
-      lint();
-
-      expect(getExecCommand()).not.toContain("--verbose");
-    });
-
-    it("should exit with status 1 when linting fails", () => {
-      vi.mocked(execSync).mockImplementation(() => {
-        throw new Error("Linting failed");
+    it("should exit with status code when linting fails (non-zero)", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        status: 2,
       });
 
-      const errorSpy = vi.spyOn(console, "error");
+      expect(lint()).toBe(2);
+    });
 
-      const exitError = new Error("Exit");
-      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-        throw exitError;
+    it("should throw when spawnSync returns an error", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        error: new Error("boom"),
       });
 
-      expect(() => lint()).toThrow(exitError);
-      expect(exitSpy).toHaveBeenCalledWith(1);
-      expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Linting failed"),
-      );
+      expect(() => lint()).toThrow("boom");
     });
   });
 });

@@ -2,4 +2,4 @@
 
 import { lint } from "../../lib/spectral/lint.js";
 
-lint();
+process.exit(lint());
