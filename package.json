@@ -1,5 +1,6 @@
 {
   "name": "@bymbly/openapi-tools",
+  "type": "module",
   "version": "1.0.0",
   "description": "Standardized CLI tooling for OpenAPI specifications",
   "license": "Apache-2.0",
