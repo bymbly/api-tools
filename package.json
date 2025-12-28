@@ -30,8 +30,9 @@
     "spectral-lint": "./dist/bin/spectral/lint.js"
   },
   "scripts": {
-    "build": "npm run clean:dist && tsc && npm run copy:defaults",
+    "build": "npm run clean:dist && tsc -p tsconfig.json && npm run copy:defaults",
     "watch": "tsc --watch",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "npm run build",
     "copy:defaults": "copyfiles --all defaults/* dist/",
     "test": "vitest run",
