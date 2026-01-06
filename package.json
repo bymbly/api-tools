@@ -28,7 +28,7 @@
     "redocly-build-docs": "./dist/bin/redocly/build-docs.js",
     "redocly-generate-arazzo": "./dist/bin/redocly/generate-arazzo.js",
     "redocly-respect": "./dist/bin/redocly/respect.js",
-    "spectral-lint": "./dist/bin/spectral/lint.js"
+    "spectral-lint": "api-tools spectral lint"
   },
   "scripts": {
     "build": "npm run clean:dist && tsc -p tsconfig.build.json && npm run copy:defaults",
@@ -54,12 +54,15 @@
     "@stoplight/spectral-cli": "^6.15.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/node": "^24.10.1",
     "@vitest/ui": "^4.0.15",
     "copyfiles": "^2.4.1",
+    "eslint": "^9.39.2",
     "markdownlint-cli2": "0.20.0",
     "prettier": "3.7.4",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.52.0",
     "vitest": "^4.0.15"
   }
 }
