@@ -22,6 +22,7 @@
     "@bymbly:registry": "https://npm.pkg.github.com"
   },
   "bin": {
+    "api-tools": "./dist/bin/api-tools.js",
     "redocly-bundle": "./dist/bin/redocly/bundle.js",
     "redocly-lint": "./dist/bin/redocly/lint.js",
     "redocly-build-docs": "./dist/bin/redocly/build-docs.js",
@@ -48,6 +49,7 @@
     "clean:dist": "rm -rf ./dist"
   },
   "dependencies": {
+    "@commander-js/extra-typings": "^14.0.0",
     "@redocly/cli": "^2.12.3",
     "@stoplight/spectral-cli": "^6.15.0"
   },
