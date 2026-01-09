@@ -1,4 +1,8 @@
-import { Command, Option } from "@commander-js/extra-typings";
+import {
+  Command,
+  CommandUnknownOpts,
+  Option,
+} from "@commander-js/extra-typings";
 import { getGlobals, parsePassthrough, resolveStdio } from "../cli/runtime.js";
 import { lintSpectral, spectralPassthrough } from "./lint.js";
 
@@ -77,7 +81,7 @@ function rawSpectral(_options: unknown, cmd: Command): void {
 function runSpectralLint(
   input: string | undefined,
   options: SpectralLintCliOptions,
-  cmd: Command<[string | undefined], SpectralLintCliOptions>,
+  cmd: CommandUnknownOpts,
 ): void {
   const globals = getGlobals(cmd);
 
