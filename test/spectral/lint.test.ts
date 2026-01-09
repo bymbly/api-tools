@@ -1,11 +1,11 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { SpectralLintRun } from "../../src/lib/spectral/lint.js";
 import {
   lintSpectral,
   spectralPassthrough,
 } from "../../src/lib/spectral/lint.js";
-import type { SpectralLintRun } from "../../src/lib/spectral/lint.js";
 import { getSpawnCall } from "../helper.js";
 
 vi.mock("node:child_process");
@@ -25,10 +25,10 @@ function okSpawnResult() {
 describe("Spectral Lint Functions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(console, "log").mockImplementation(() => {});
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    vi.spyOn(fs, "readdirSync").mockReturnValue([] as any);
-    vi.mocked(spawnSync).mockReturnValue(okSpawnResult() as any);
+    vi.spyOn(console, "log").mockImplementation(vi.fn());
+    vi.spyOn(console, "error").mockImplementation(vi.fn());
+    vi.spyOn(fs, "readdirSync").mockReturnValue([]);
+    vi.mocked(spawnSync).mockReturnValue(okSpawnResult());
   });
 
   afterEach(() => {
@@ -58,7 +58,7 @@ describe("Spectral Lint Functions", () => {
       vi.mocked(spawnSync).mockReturnValue({
         ...okSpawnResult(),
         status: 2,
-      } as any);
+      });
 
       const exitCode = spectralPassthrough(["lint", "bad.yaml"], "inherit");
       expect(exitCode).toBe(2);
@@ -159,8 +159,18 @@ describe("Spectral Lint Functions", () => {
 
     it("should not pass ruleset when local config exists", () => {
       vi.spyOn(fs, "readdirSync").mockReturnValue([
-        { isFile: () => true, name: ".spectral.yaml" },
-      ] as any);
+        {
+          name: Buffer.from(".spectral.yaml"),
+          parentPath: "",
+          isFile: () => true,
+          isDirectory: () => false,
+          isBlockDevice: () => false,
+          isCharacterDevice: () => false,
+          isSymbolicLink: () => false,
+          isFIFO: () => false,
+          isSocket: () => false,
+        },
+      ]);
 
       const run: SpectralLintRun = {
         options: {
@@ -340,7 +350,7 @@ describe("Spectral Lint Functions", () => {
       vi.mocked(spawnSync).mockReturnValue({
         ...okSpawnResult(),
         status: 1,
-      } as any);
+      });
 
       const run: SpectralLintRun = {
         options: {
@@ -359,7 +369,7 @@ describe("Spectral Lint Functions", () => {
       vi.mocked(spawnSync).mockReturnValue({
         ...okSpawnResult(),
         error: new Error("spawn failed"),
-      } as any);
+      });
 
       const run: SpectralLintRun = {
         options: {
