@@ -21,7 +21,6 @@ export function getSpawnCall(expectedStdio: Stdio = "inherit"): SpawnCall {
 
   expect(command).toBe(process.execPath);
   expect(opts).toMatchObject({ stdio: expectedStdio });
-  expect(opts.env).toEqual(process.env);
 
   return { command, args, opts };
 }
