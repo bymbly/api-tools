@@ -9,7 +9,7 @@ export interface RespectOptions {
 
 export function getOptions(): RespectOptions {
   return {
-    files: process.env.ARAZZO_INPUT || "arazzo/*.arazzo.yaml",
+    files: process.env.ARAZZO_INPUT ?? "arazzo/*.arazzo.yaml",
     verbose: process.env.ARAZZO_VERBOSE === "true",
     harOutput: process.env.ARAZZO_HAR_OUTPUT,
     jsonOutput: process.env.ARAZZO_JSON_OUTPUT,
@@ -43,7 +43,7 @@ export function respect(): void {
     console.log(`✅ Arazzo workflows executed successfully.`);
   } catch (error) {
     console.error(`❌ Arazzo workflows failed!`);
-    console.error(`${error instanceof Error ? error.message : String(error)}`);
+    console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 }

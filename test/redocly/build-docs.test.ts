@@ -127,7 +127,9 @@ describe("Build Docs Functions", () => {
       const mockExit = vi
         .spyOn(process, "exit")
         .mockImplementation(() => undefined as never);
-      const mockError = vi.spyOn(console, "error").mockImplementation(() => {});
+      const mockError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => vi.fn());
 
       vi.mocked(execSync).mockImplementation(() => {
         throw new Error("Building documentation failed");

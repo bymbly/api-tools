@@ -1,11 +1,11 @@
 import { Command } from "@commander-js/extra-typings";
 import { spectralCommand } from "../spectral/command.js";
 
-export type GlobalOptions = {
+export interface GlobalOptions {
   quiet?: boolean;
   silent?: boolean;
   cwd?: string;
-};
+}
 
 export function buildProgram() {
   return new Command()

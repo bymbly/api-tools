@@ -19,8 +19,8 @@ export function getOptions(): BundleOptions {
   const format = formatEnv && isValidFormat(formatEnv) ? formatEnv : "yaml";
 
   return {
-    input: process.env.OPENAPI_INPUT || "openapi/openapi.yaml",
-    output: process.env.OPENAPI_OUTPUT || "dist/openapi",
+    input: process.env.OPENAPI_INPUT ?? "openapi/openapi.yaml",
+    output: process.env.OPENAPI_OUTPUT ?? "dist/openapi",
     format,
     configPath: process.env.OPENAPI_CONFIG,
   };
@@ -35,7 +35,7 @@ export function bundle(): void {
   console.log(`   Input: ${options.input}`);
   console.log(`   Output: ${options.output}`);
   console.log(`   Format: ${options.format}`);
-  console.log(`   Config: ${options.configPath || "default"}`);
+  console.log(`   Config: ${options.configPath ?? "default"}`);
 
   createPath(outputFile);
 
@@ -50,7 +50,7 @@ export function bundle(): void {
     console.log(`✅ Bundle created successfully: ${outputFile}`);
   } catch (error) {
     console.error(`❌ Bundling failed!`);
-    console.error(`${error instanceof Error ? error.message : String(error)}`);
+    console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 }

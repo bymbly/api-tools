@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bundle } from "../../src/lib/redocly/bundle";
+import { bundle } from "../../src/lib/redocly/bundle.js";
 
 describe("Bundle Integration Tests", () => {
   const originalEnv = process.env;

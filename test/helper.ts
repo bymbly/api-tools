@@ -3,11 +3,11 @@ import { expect, vi } from "vitest";
 
 type Stdio = "inherit" | "ignore";
 
-export type SpawnCall = {
+export interface SpawnCall {
   command: string;
   args: string[];
   opts: { stdio: Stdio; env?: NodeJS.ProcessEnv };
-};
+}
 
 export function getSpawnCall(expectedStdio: Stdio = "inherit"): SpawnCall {
   const mocked = vi.mocked(spawnSync);

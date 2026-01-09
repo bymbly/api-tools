@@ -9,8 +9,8 @@ export interface BuildDocsOptions {
 
 export function getOptions(): BuildDocsOptions {
   return {
-    input: process.env.OPENAPI_INPUT || "openapi/openapi.yaml",
-    output: process.env.OPENAPI_OUTPUT || "dist/openapi.html",
+    input: process.env.OPENAPI_INPUT ?? "openapi/openapi.yaml",
+    output: process.env.OPENAPI_OUTPUT ?? "dist/openapi.html",
     configPath: process.env.OPENAPI_CONFIG,
   };
 }
@@ -21,7 +21,7 @@ export function buildDocs(): void {
   console.log(`📚 Building documentation...`);
   console.log(`   Input: ${options.input}`);
   console.log(`   Output: ${options.output}`);
-  console.log(`   Config: ${options.configPath || "default"}`);
+  console.log(`   Config: ${options.configPath ?? "default"}`);
 
   let command = `npx --no @redocly/cli build-docs ${options.input} --output ${options.output}`;
   if (options.configPath) {
@@ -36,7 +36,7 @@ export function buildDocs(): void {
     console.log(`✅ Documentation built successfully: ${options.output}`);
   } catch (error) {
     console.error(`❌ Building documentation failed!`);
-    console.error(`${error instanceof Error ? error.message : String(error)}`);
+    console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 }

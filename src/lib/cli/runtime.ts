@@ -8,7 +8,7 @@ export function resolveStdio(globals: GlobalOptions): StdioMode {
 }
 
 export function isQuiet(globals: GlobalOptions): boolean {
-  return Boolean(globals.quiet || globals.silent);
+  return globals.quiet === true || globals.silent === true;
 }
 
 export function parsePassthrough(

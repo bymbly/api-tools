@@ -21,14 +21,14 @@ const VALID_FAIL_SEVERITIES = ["error", "warn", "info", "hint"] as const;
 export type OutputFormat = (typeof VALID_OUTPUT_FORMATS)[number];
 export type FailSeverity = (typeof VALID_FAIL_SEVERITIES)[number];
 
-export type SpectralLintCliOptions = {
+export interface SpectralLintCliOptions {
   format: OutputFormat;
   output?: string;
   ruleset?: string;
   failSeverity: FailSeverity;
   displayOnlyFailures: boolean;
   verbose: boolean;
-};
+}
 
 export const spectralCommand = new Command("spectral")
   .description("Spectral-related commands")
@@ -61,7 +61,7 @@ export const spectralCommand = new Command("spectral")
   );
 
 function rawSpectral(_options: unknown, cmd: Command): void {
-  const [_input, passthrough] = parsePassthrough(process.argv, undefined);
+  const [, passthrough] = parsePassthrough(process.argv, undefined);
 
   if (passthrough.length === 0) {
     cmd.help();
