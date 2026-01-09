@@ -44,7 +44,9 @@ describe("Lint Integration Tests", () => {
         },
       );
 
-      expect(() => { lint(); }).not.toThrow();
+      expect(() => {
+        lint();
+      }).not.toThrow();
     });
   });
 
@@ -95,7 +97,9 @@ describe("Lint Integration Tests", () => {
 
       process.env.OPENAPI_INPUT = "custom/spec.yaml";
 
-      expect(() => { lint(); }).not.toThrow();
+      expect(() => {
+        lint();
+      }).not.toThrow();
     });
 
     it("should work with custom config path", () => {
@@ -112,7 +116,9 @@ describe("Lint Integration Tests", () => {
         "test/fixtures/redocly.yaml",
       );
 
-      expect(() => { lint(); }).not.toThrow();
+      expect(() => {
+        lint();
+      }).not.toThrow();
     });
   });
 });
