@@ -1,4 +1,4 @@
-import { exec } from "node:child_process";
+import { exec, ExecException } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -31,13 +31,26 @@ describe("Spectral Lint Integration Tests", () => {
         `node ${binPath} ${args.join(" ")}`,
       );
       return { stdout, stderr, exitCode: 0 };
-    } catch (error: any) {
-      return {
-        stdout: error.stdout || "",
-        stderr: error.stderr || "",
-        exitCode: error.code || 1,
-      };
+    } catch (error) {
+      if (isExecException(error)) {
+        return {
+          stdout: error.stdout ?? "",
+          stderr: error.stderr ?? "",
+          exitCode: error.code ?? 1,
+        };
+      }
+      throw error;
     }
+  }
+
+  function isExecException(error: unknown): error is ExecException {
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      "stdout" in error &&
+      "stderr" in error
+    );
   }
 
   describe("OpenAPI specs", () => {
@@ -219,7 +232,7 @@ describe("Spectral Lint Integration Tests", () => {
         path.join(tempDir, "lint-results.json"),
         "utf8",
       );
-      expect(() => JSON.parse(content)).not.toThrow();
+      expect(() => JSON.parse(content) as unknown).not.toThrow();
     });
 
     it("should work with custom fail severity", async () => {
