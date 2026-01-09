@@ -14,8 +14,13 @@ export function buildProgram() {
     .option(
       "--quiet",
       "Disable wrapper logging (still shows underlying CLI output)",
+      false,
     )
-    .option("--silent", "Disable wrapper logging and underlying CLI output")
+    .option(
+      "--silent",
+      "Disable wrapper logging and underlying CLI output",
+      false,
+    )
     .option("--cwd <path>", "Run as if started in this directory")
 
     .hook("preAction", (thisCommand) => {
