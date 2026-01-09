@@ -2,11 +2,14 @@
   "name": "@bymbly/openapi-tools",
   "type": "module",
   "version": "1.0.0",
-  "description": "Standardized CLI tooling for OpenAPI specifications",
+  "description": "Unified API tooling CLI for OpenAPI, AsyncAPI, Redocly, Arazzo, and Spectral.",
   "license": "Apache-2.0",
   "keywords": [
     "openapi",
+    "asyncapi",
+    "arazzo",
     "redocly",
+    "spectral",
     "cli",
     "tools",
     "api"
