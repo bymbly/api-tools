@@ -21,6 +21,10 @@ jobs:
     name: Lint Check
     uses: bymbly/gha-workflows/.github/workflows/markdown-lint-check.yaml@main
 
+  eslint-lint-check:
+    name: ESLint Check
+    uses: bymbly/gha-workflows/.github/workflows/eslint-lint-check.yaml@main
+
   npm-test:
     name: npm Test
     uses: bymbly/gha-workflows/.github/workflows/npm-test.yaml@main
