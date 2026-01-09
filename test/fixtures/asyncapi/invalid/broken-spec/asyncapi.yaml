@@ -1,0 +1,10 @@
+asyncapi: 3.0.0
+info:
+  title: Broken AsyncAPI
+
+channels:
+  invalidChannel:
+    messages:
+      someMessage:
+        payload:
+          type: invalid-type
