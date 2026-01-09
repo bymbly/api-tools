@@ -3,6 +3,21 @@ info:
   title: Simple AsyncAPI
   version: 1.0.0
   description: A simple AsyncAPI specification for testing
+  license:
+    name: example.dev
+    url: https://example.dev
+  contact:
+    name: API Support
+    url: https://www.example.dev/support
+    email: support@example.dev
+  tags:
+    - name: user
+      description: Operations related to user management
+
+servers:
+  production:
+    host: test.mykafkacluster.org:18092
+    protocol: kafka-secure
 
 channels:
   userSignup:
@@ -14,6 +29,7 @@ channels:
 operations:
   onUserSignup:
     action: receive
+    description: Receive a message when a user signs up
     channel:
       $ref: "#/channels/userSignup"
 
