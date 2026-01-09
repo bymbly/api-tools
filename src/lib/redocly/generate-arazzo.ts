@@ -8,8 +8,8 @@ export interface GenerateArazzoOptions {
 
 export function getOptions(): GenerateArazzoOptions {
   return {
-    input: process.env.OPENAPI_INPUT || "openapi/openapi.yaml",
-    output: process.env.OPENAPI_OUTPUT || "dist/auto-generated.arazzo.yaml",
+    input: process.env.OPENAPI_INPUT ?? "openapi/openapi.yaml",
+    output: process.env.OPENAPI_OUTPUT ?? "dist/auto-generated.arazzo.yaml",
   };
 }
 
@@ -22,7 +22,7 @@ export function generateArazzo(): void {
 
   createPath(options.output);
 
-  let command = `npx --no @redocly/cli generate-arazzo ${options.input} --output-file ${options.output}`;
+  const command = `npx --no @redocly/cli generate-arazzo ${options.input} --output-file ${options.output}`;
 
   try {
     execSync(command, { stdio: "inherit" });
@@ -31,7 +31,7 @@ export function generateArazzo(): void {
     );
   } catch (error) {
     console.error(`❌ Arazzo generation failed!`);
-    console.error(`${error instanceof Error ? error.message : String(error)}`);
+    console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 }

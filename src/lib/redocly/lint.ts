@@ -28,7 +28,7 @@ export function getOptions(): LintOptions {
     formatEnv && isValidLintFormat(formatEnv) ? formatEnv : "codeframe";
 
   return {
-    input: process.env.OPENAPI_INPUT || "openapi/openapi.yaml",
+    input: process.env.OPENAPI_INPUT ?? "openapi/openapi.yaml",
     format,
     configPath: process.env.OPENAPI_CONFIG,
   };
@@ -40,7 +40,7 @@ export function lint(): void {
   console.log(`🔍 Linting OpenAPI spec...`);
   console.log(`   Input: ${options.input}`);
   console.log(`   Format: ${options.format}`);
-  console.log(`   Config: ${options.configPath || "default"}`);
+  console.log(`   Config: ${options.configPath ?? "default"}`);
 
   let command = `npx --no @redocly/cli lint ${options.input} --format ${options.format}`;
   if (options.configPath) {
@@ -53,7 +53,7 @@ export function lint(): void {
     console.log(`✅ Linting completed successfully.`);
   } catch (error) {
     console.error(`❌ Linting failed!`);
-    console.error(`${error instanceof Error ? error.message : String(error)}`);
+    console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 }

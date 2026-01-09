@@ -125,7 +125,7 @@ describe("Build Docs Integration Tests", () => {
         "test/fixtures/redocly.yaml",
       );
 
-      expect(() => buildDocs()).not.toThrow();
+      expect(() => { buildDocs(); }).not.toThrow();
     });
   });
 });

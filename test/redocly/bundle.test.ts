@@ -132,14 +132,14 @@ describe("Bundle Functions", () => {
 
       bundle();
 
-      const command = vi.mocked(execSync).mock.calls[0][0] as string;
+      const command = vi.mocked(execSync).mock.calls[0][0];
       expect(command).toContain("--config .config/redocly.yaml");
     });
 
     it("should not include --config flag when configPath is not set", () => {
       bundle();
 
-      const command = vi.mocked(execSync).mock.calls[0][0] as string;
+      const command = vi.mocked(execSync).mock.calls[0][0];
       expect(command).not.toContain("--config");
     });
 
@@ -147,7 +147,9 @@ describe("Bundle Functions", () => {
       const mockExit = vi
         .spyOn(process, "exit")
         .mockImplementation(() => undefined as never);
-      const mockError = vi.spyOn(console, "error").mockImplementation(() => {});
+      const mockError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => vi.fn());
 
       vi.mocked(execSync).mockImplementation(() => {
         throw new Error("Bundling failed");

@@ -20,17 +20,17 @@ const defaultRulesetPath = path.join(
 );
 
 type RulesetSource = "cli" | "local" | "bundled";
-type ResolvedRuleset = {
+interface ResolvedRuleset {
   path?: string;
   source: RulesetSource;
-};
+}
 
-export type SpectralLintRun = {
+export interface SpectralLintRun {
   input?: string;
   options: SpectralLintCliOptions;
   globals: GlobalOptions;
   passthrough?: string[];
-};
+}
 
 export function spectralPassthrough(args: string[], stdio: StdioMode): number {
   return runSpectral(args, stdio);
@@ -61,8 +61,10 @@ export function lintSpectral(run: SpectralLintRun): number {
       console.log(`   Output: ${options.output}`);
     }
     console.log(`   Fail Severity: ${options.failSeverity}`);
-    console.log(`   Display Only Failures: ${options.displayOnlyFailures}`);
-    console.log(`   Verbose: ${options.verbose}`);
+    console.log(
+      `   Display Only Failures: ${String(options.displayOnlyFailures)}`,
+    );
+    console.log(`   Verbose: ${String(options.verbose)}`);
   }
 
   return runSpectral(spectralArgs, stdio);
