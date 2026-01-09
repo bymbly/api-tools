@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { lint } from "../../src/lib/redocly/lint";
+import { lint } from "../../src/lib/redocly/lint.js";
 
 describe("Lint Integration Tests", () => {
   const originalEnv = process.env;
@@ -30,7 +30,9 @@ describe("Lint Integration Tests", () => {
         },
       );
 
-      expect(() => lint()).not.toThrow();
+      expect(() => {
+        lint();
+      }).not.toThrow();
     });
 
     it("should pass for spec with references", () => {
@@ -42,7 +44,7 @@ describe("Lint Integration Tests", () => {
         },
       );
 
-      expect(() => lint()).not.toThrow();
+      expect(() => { lint(); }).not.toThrow();
     });
   });
 
@@ -93,7 +95,7 @@ describe("Lint Integration Tests", () => {
 
       process.env.OPENAPI_INPUT = "custom/spec.yaml";
 
-      expect(() => lint()).not.toThrow();
+      expect(() => { lint(); }).not.toThrow();
     });
 
     it("should work with custom config path", () => {
@@ -110,7 +112,7 @@ describe("Lint Integration Tests", () => {
         "test/fixtures/redocly.yaml",
       );
 
-      expect(() => lint()).not.toThrow();
+      expect(() => { lint(); }).not.toThrow();
     });
   });
 });

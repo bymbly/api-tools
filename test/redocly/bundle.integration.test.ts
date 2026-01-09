@@ -3,6 +3,15 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bundle } from "../../src/lib/redocly/bundle.js";
 
+interface OpenAPIDoc {
+  openapi: string;
+  info: { title: string };
+  paths: Record<string, unknown>;
+  components: {
+    schemas: Record<string, { properties: Record<string, unknown> }>;
+  };
+}
+
 describe("Bundle Integration Tests", () => {
   const originalEnv = process.env;
   const originalCwd = process.cwd();
@@ -54,7 +63,7 @@ describe("Bundle Integration Tests", () => {
 
       const bundled = fs.readFileSync("dist/openapi.json", "utf-8");
 
-      const parsed = JSON.parse(bundled);
+      const parsed = JSON.parse(bundled) as OpenAPIDoc;
       expect(parsed.openapi).toBe("3.1.1");
       expect(parsed.info.title).toBe("Simple Test API");
       expect(parsed.paths["/test"]).toBeDefined();
@@ -107,7 +116,7 @@ describe("Bundle Integration Tests", () => {
 
       const bundled = fs.readFileSync("dist/openapi.json", "utf-8");
 
-      const parsed = JSON.parse(bundled);
+      const parsed = JSON.parse(bundled) as OpenAPIDoc;
       expect(parsed.openapi).toBe("3.1.1");
       expect(parsed.info.title).toBe("Test API with References");
       expect(parsed.paths["/test"]).toBeDefined();

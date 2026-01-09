@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { respect } from "../../src/lib/redocly/respect";
+import { respect } from "../../src/lib/redocly/respect.js";
 
 /**
  * Integration tests for Redocly Arazzo Respect command require a live API server.
