@@ -14,10 +14,7 @@ const nodeRequire = createRequire(import.meta.url);
 // https://github.com/stoplightio/spectral/blob/develop/packages/core/src/ruleset/ruleset.ts#L24
 const SPECTRAL_RULESET_REGEX = /^\.?spectral\.(ya?ml|json|m?js)$/;
 
-const defaultRulesetPath = path.join(
-  __dirname,
-  "../../../defaults/spectral.yaml",
-);
+const defaultRulesetPath = path.join(__dirname, "../../defaults/spectral.yaml");
 
 type RulesetSource = "cli" | "local" | "bundled";
 interface ResolvedRuleset {
