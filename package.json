@@ -25,13 +25,7 @@
     "@bymbly:registry": "https://npm.pkg.github.com"
   },
   "bin": {
-    "api-tools": "./dist/bin/api-tools.js",
-    "redocly-bundle": "./dist/bin/redocly/bundle.js",
-    "redocly-lint": "./dist/bin/redocly/lint.js",
-    "redocly-build-docs": "./dist/bin/redocly/build-docs.js",
-    "redocly-generate-arazzo": "./dist/bin/redocly/generate-arazzo.js",
-    "redocly-respect": "./dist/bin/redocly/respect.js",
-    "spectral-lint": "api-tools spectral lint"
+    "api-tools": "./dist/bin/api-tools.js"
   },
   "scripts": {
     "dev": "npm run watch",
