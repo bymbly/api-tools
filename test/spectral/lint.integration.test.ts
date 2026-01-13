@@ -53,116 +53,326 @@ describe("Spectral Lint Integration Tests", () => {
     );
   }
 
-  describe("OpenAPI specs", () => {
-    describe("valid specs", () => {
-      it("should pass for simple valid spec with bundled default config", async () => {
-        fs.cpSync(
-          path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
-          path.join(tempDir, "openapi"),
-          { recursive: true },
-        );
+  describe("auto-detection", () => {
+    it("should lint all found documents when no flags specified", async () => {
+      // Create all three types
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
 
-        const result = await runCli(["spectral", "lint", "--silent"]);
-        expect(result.exitCode).toBe(0);
-      });
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
+        path.join(tempDir, "asyncapi"),
+        { recursive: true },
+      );
 
-      it("should pass for spec with references", async () => {
-        fs.cpSync(
-          path.join(originalCwd, "test/fixtures/openapi/valid/spec-with-refs"),
-          path.join(tempDir, "openapi"),
-          { recursive: true },
-        );
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
+        path.join(tempDir, "arazzo"),
+        { recursive: true },
+      );
 
-        const result = await runCli(["spectral", "lint", "--silent"]);
-        expect(result.exitCode).toBe(0);
-      });
-
-      it("should pass when local .spectral.yaml exists", async () => {
-        fs.cpSync(
-          path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
-          path.join(tempDir, "openapi"),
-          { recursive: true },
-        );
-
-        fs.cpSync(
-          path.join(originalCwd, "defaults/spectral.yaml"),
-          path.join(tempDir, ".spectral.yaml"),
-        );
-
-        const result = await runCli(["spectral", "lint", "--silent"]);
-        expect(result.exitCode).toBe(0);
-      });
+      const result = await runCli(["spectral", "lint", "--silent"]);
+      expect(result.exitCode).toBe(0);
     });
 
-    describe("invalid specs", () => {
-      it("should fail for invalid spec with bundled default config", async () => {
-        fs.cpSync(
-          path.join(originalCwd, "test/fixtures/openapi/invalid/broken-spec"),
-          path.join(tempDir, "openapi"),
-          { recursive: true },
-        );
+    it("should succeed when only one document type exists", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
 
-        const result = await runCli(["spectral", "lint", "--silent"]);
-        expect(result.exitCode).not.toBe(0);
-      });
-    });
-  });
-
-  describe("AsyncAPI specs", () => {
-    describe("valid specs", () => {
-      it("should pass for simple valid AsyncAPI spec", async () => {
-        fs.cpSync(
-          path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
-          path.join(tempDir, "asyncapi"),
-          { recursive: true },
-        );
-
-        const result = await runCli([
-          "spectral",
-          "lint",
-          "asyncapi/asyncapi.yaml",
-          "--silent",
-        ]);
-        expect(result.exitCode).toBe(0);
-      });
+      const result = await runCli(["spectral", "lint", "--silent"]);
+      expect(result.exitCode).toBe(0);
     });
 
-    describe("invalid specs", () => {
-      it("should fail for invalid AsyncAPI spec", async () => {
-        fs.cpSync(
-          path.join(originalCwd, "test/fixtures/asyncapi/invalid/broken-spec"),
-          path.join(tempDir, "asyncapi"),
-          { recursive: true },
-        );
+    it("should fail when no documents found", async () => {
+      const result = await runCli(["spectral", "lint", "--silent"]);
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("No documents found");
+    });
 
-        const result = await runCli([
-          "spectral",
-          "lint",
-          "asyncapi/asyncapi.yaml",
-          "--silent",
-        ]);
-        expect(result.exitCode).not.toBe(0);
-      });
+    it("should fail if any document fails", async () => {
+      // Valid OpenAPI
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      // Invalid AsyncAPI
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/asyncapi/invalid/broken-spec"),
+        path.join(tempDir, "asyncapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli(["spectral", "lint", "--silent"]);
+      expect(result.exitCode).not.toBe(0);
     });
   });
 
-  describe("Arazzo specs", () => {
-    describe("valid specs", () => {
-      it("should pass for simple valid Arazzo spec", async () => {
-        fs.cpSync(
-          path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
-          path.join(tempDir, "arazzo"),
-          { recursive: true },
-        );
+  describe("type-specific flags", () => {
+    it("should lint only OpenAPI when --openapi specified", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
 
-        const result = await runCli([
-          "spectral",
-          "lint",
-          "arazzo/arazzo.yaml",
-          "--silent",
-        ]);
-        expect(result.exitCode).toBe(0);
-      });
+      // Also create AsyncAPI, but it shouldn't be linted
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
+        path.join(tempDir, "asyncapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should lint only AsyncAPI when --asyncapi specified", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
+        path.join(tempDir, "asyncapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--asyncapi",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should lint only Arazzo when --arazzo specified", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
+        path.join(tempDir, "arazzo"),
+        { recursive: true },
+      );
+
+      const result = await runCli(["spectral", "lint", "--arazzo", "--silent"]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should lint multiple types when multiple flags specified", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
+        path.join(tempDir, "asyncapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--asyncapi",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should fail when specified document type doesn't exist", async () => {
+      // No documents created
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("No documents found");
+    });
+  });
+
+  describe("explicit path overrides type flags", () => {
+    it("should lint explicit path even when type flags present", async () => {
+      fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
+      fs.copyFileSync(
+        path.join(
+          originalCwd,
+          "test/fixtures/openapi/valid/simple-spec/openapi.yaml",
+        ),
+        path.join(tempDir, "custom/spec.yaml"),
+      );
+
+      // Create openapi default location too
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "custom/spec.yaml",
+        "--openapi", // This should be ignored
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should only lint explicit path, not auto-detected ones", async () => {
+      fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
+      fs.copyFileSync(
+        path.join(
+          originalCwd,
+          "test/fixtures/openapi/valid/simple-spec/openapi.yaml",
+        ),
+        path.join(tempDir, "custom/spec.yaml"),
+      );
+
+      // Create invalid openapi at default location
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/invalid/broken-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      // Should pass because it only lints custom/spec.yaml
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "custom/spec.yaml",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+  });
+
+  describe("OpenAPI documents", () => {
+    it("should pass for simple valid spec with bundled default config", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should pass for spec with references", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/spec-with-refs"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should pass when local .spectral.yaml exists", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      fs.cpSync(
+        path.join(originalCwd, "defaults/spectral.yaml"),
+        path.join(tempDir, ".spectral.yaml"),
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should fail for invalid spec with bundled default config", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/invalid/broken-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
+      expect(result.exitCode).not.toBe(0);
+    });
+  });
+
+  describe("AsyncAPI documents", () => {
+    it("should pass for simple valid AsyncAPI spec", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
+        path.join(tempDir, "asyncapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--asyncapi",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should fail for invalid AsyncAPI spec", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/asyncapi/invalid/broken-spec"),
+        path.join(tempDir, "asyncapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--asyncapi",
+        "--silent",
+      ]);
+      expect(result.exitCode).not.toBe(0);
+    });
+  });
+
+  describe("Arazzo documents", () => {
+    it("should pass for simple valid Arazzo spec", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
+        path.join(tempDir, "arazzo"),
+        { recursive: true },
+      );
+
+      const result = await runCli(["spectral", "lint", "--arazzo", "--silent"]);
+      expect(result.exitCode).toBe(0);
     });
   });
 
@@ -201,6 +411,7 @@ describe("Spectral Lint Integration Tests", () => {
       const result = await runCli([
         "spectral",
         "lint",
+        "--openapi",
         "--ruleset",
         "custom-spectral.yaml",
         "--silent",
@@ -218,6 +429,7 @@ describe("Spectral Lint Integration Tests", () => {
       const result = await runCli([
         "spectral",
         "lint",
+        "--openapi",
         "--format",
         "json",
         "--output",
@@ -245,6 +457,7 @@ describe("Spectral Lint Integration Tests", () => {
       const result = await runCli([
         "spectral",
         "lint",
+        "--openapi",
         "--fail-severity",
         "error",
         "--silent",
@@ -262,6 +475,7 @@ describe("Spectral Lint Integration Tests", () => {
       const result = await runCli([
         "spectral",
         "lint",
+        "--openapi",
         "--display-only-failures",
         "--silent",
       ]);
@@ -278,6 +492,7 @@ describe("Spectral Lint Integration Tests", () => {
       const result = await runCli([
         "spectral",
         "lint",
+        "--openapi",
         "--verbose",
         "--silent",
       ]);
@@ -294,6 +509,7 @@ describe("Spectral Lint Integration Tests", () => {
       const result = await runCli([
         "spectral",
         "lint",
+        "--openapi",
         "--silent",
         "--",
         "--ignore-unknown-format",
@@ -316,6 +532,7 @@ describe("Spectral Lint Integration Tests", () => {
         subDir,
         "spectral",
         "lint",
+        "--openapi",
         "--silent",
       ]);
       expect(result.exitCode).toBe(0);
