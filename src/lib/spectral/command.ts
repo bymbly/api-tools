@@ -3,6 +3,7 @@ import {
   CommandUnknownOpts,
   Option,
 } from "@commander-js/extra-typings";
+import fs from "node:fs";
 import { getGlobals, parsePassthrough, resolveStdio } from "../cli/runtime.js";
 import { lintSpectral, spectralPassthrough } from "./lint.js";
 
@@ -32,7 +33,26 @@ export interface SpectralLintCliOptions {
   failSeverity: FailSeverity;
   displayOnlyFailures: boolean;
   verbose: boolean;
+  openapi?: boolean;
+  asyncapi?: boolean;
+  arazzo?: boolean;
 }
+
+interface SpecType {
+  flag: keyof Pick<SpectralLintCliOptions, "openapi" | "asyncapi" | "arazzo">;
+  defaultPath: string;
+  name: string;
+}
+
+const SPEC_TYPES: SpecType[] = [
+  { flag: "openapi", defaultPath: "openapi/openapi.yaml", name: "OpenAPI" },
+  {
+    flag: "asyncapi",
+    defaultPath: "asyncapi/asyncapi.yaml",
+    name: "AsyncAPI",
+  },
+  { flag: "arazzo", defaultPath: "arazzo/arazzo.yaml", name: "Arazzo" },
+];
 
 export const spectralCommand = new Command("spectral")
   .description("Spectral-related commands")
@@ -44,7 +64,19 @@ export const spectralCommand = new Command("spectral")
       .description(
         "Validate and lint OpenAPI v2 & v3.x, AsyncAPI, and Arazzo v1 Documents using Spectral",
       )
-      .argument("[input]", "Spec path (default: openapi/openapi.yaml)")
+      .argument("[input]", "Document path (default: auto-detect)")
+
+      .option(
+        "--openapi",
+        "Lint OpenAPI document at openapi/openapi.yaml",
+        false,
+      )
+      .option(
+        "--asyncapi",
+        "Lint AsyncAPI document at asyncapi/asyncapi.yaml",
+        false,
+      )
+      .option("--arazzo", "Lint Arazzo document at arazzo/arazzo.yaml", false)
 
       .addOption(
         new Option("--format <format>", "Output format")
@@ -88,12 +120,53 @@ function runSpectralLint(
   let passthrough: string[];
   [input, passthrough] = parsePassthrough(process.argv, input);
 
-  const code = lintSpectral({
-    input,
-    options,
-    globals,
-    passthrough,
-  });
+  const documentsToLint = determineDocumentsToLint(input, options);
 
-  process.exitCode = code;
+  if (documentsToLint.length === 0) {
+    console.error("❌ No documents found to lint");
+    process.exitCode = 1;
+    return;
+  }
+
+  const results: { input: string; exitCode: number }[] = [];
+
+  for (const docInput of documentsToLint) {
+    const code = lintSpectral({
+      input: docInput,
+      options,
+      globals,
+      passthrough,
+    });
+
+    results.push({ input: docInput, exitCode: code });
+  }
+
+  const failedDocs = results.filter((r) => r.exitCode !== 0);
+
+  if (failedDocs.length > 0) {
+    process.exitCode = 1;
+  } else {
+    process.exitCode = 0;
+  }
+}
+function determineDocumentsToLint(
+  input: string | undefined,
+  options: SpectralLintCliOptions,
+): string[] {
+  // if explicit input provided, only use that
+  if (input) return [input];
+
+  const requestedTypes = SPEC_TYPES.filter((type) => options[type.flag]);
+
+  const typesToCheck = requestedTypes.length > 0 ? requestedTypes : SPEC_TYPES;
+
+  return typesToCheck
+    .filter((type) => {
+      try {
+        return fs.existsSync(type.defaultPath);
+      } catch {
+        return false;
+      }
+    })
+    .map((type) => type.defaultPath);
 }
