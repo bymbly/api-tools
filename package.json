@@ -1,5 +1,5 @@
 {
-  "name": "@bymbly/openapi-tools",
+  "name": "@bymbly/api-tools",
   "type": "module",
   "version": "1.0.0",
   "description": "Unified API tooling CLI for OpenAPI, AsyncAPI, Redocly, Arazzo, and Spectral.",
