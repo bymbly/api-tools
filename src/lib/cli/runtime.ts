@@ -1,4 +1,5 @@
 import { CommandUnknownOpts } from "@commander-js/extra-typings";
+import fs from "node:fs";
 import { GlobalOptions } from "./program.js";
 
 export type StdioMode = "inherit" | "ignore";
@@ -34,4 +35,52 @@ export function parsePassthrough(
 
 export function getGlobals(cmd: CommandUnknownOpts): GlobalOptions {
   return cmd.optsWithGlobals() as GlobalOptions;
+}
+
+export interface DocTypeOptions {
+  openapi?: boolean;
+  asyncapi?: boolean;
+  arazzo?: boolean;
+}
+
+export interface DocType {
+  flag: string;
+  defaultPath: string;
+  name: string;
+}
+
+export const SPEC_TYPES: DocType[] = [
+  { flag: "openapi", defaultPath: "openapi/openapi.yaml", name: "OpenAPI" },
+  {
+    flag: "asyncapi",
+    defaultPath: "asyncapi/asyncapi.yaml",
+    name: "AsyncAPI",
+  },
+  { flag: "arazzo", defaultPath: "arazzo/arazzo.yaml", name: "Arazzo" },
+];
+
+export interface ResolverParams {
+  input: string | undefined;
+  options: DocTypeOptions;
+}
+
+export function resolveDocuments(params: ResolverParams): string[] {
+  // if explicit input provided, only use that
+  if (params.input) return [params.input];
+
+  const requestedTypes = SPEC_TYPES.filter(
+    (type) => params.options[type.flag as keyof DocTypeOptions],
+  );
+
+  const typesToCheck = requestedTypes.length > 0 ? requestedTypes : SPEC_TYPES;
+
+  return typesToCheck
+    .filter((type) => {
+      try {
+        return fs.existsSync(type.defaultPath);
+      } catch {
+        return false;
+      }
+    })
+    .map((type) => type.defaultPath);
 }

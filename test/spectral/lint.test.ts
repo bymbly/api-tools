@@ -1,7 +1,8 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SpectralLintRun } from "../../src/lib/spectral/lint.js";
+import { ExecuteParams } from "../../src/lib/cli/helpers.js";
+import type { SpectralLintCliOptions } from "../../src/lib/spectral/lint.js";
 import {
   lintSpectral,
   spectralPassthrough,
@@ -66,8 +67,9 @@ describe("Spectral Lint Functions", () => {
   });
 
   describe("lintSpectral", () => {
-    it("should use default input when not provided", () => {
-      const run: SpectralLintRun = {
+    it("should use provided input", () => {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -75,6 +77,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       expect(lintSpectral(run)).toBe(0);
@@ -84,7 +87,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should use custom input when provided", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
         input: "custom/spec.yaml",
         options: {
           format: "stylish",
@@ -93,6 +96,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -102,7 +106,8 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should pass format option to spectral", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "json",
           failSeverity: "warn",
@@ -110,6 +115,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -120,7 +126,8 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should pass output option when specified", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "json",
           output: "results.json",
@@ -129,6 +136,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -139,7 +147,8 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should use CLI-provided ruleset when specified", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           ruleset: "custom/spectral.yaml",
@@ -148,6 +157,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -172,7 +182,8 @@ describe("Spectral Lint Functions", () => {
         },
       ]);
 
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -180,6 +191,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -189,7 +201,8 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should use bundled ruleset when no local config", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -197,6 +210,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -207,7 +221,8 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should pass fail-severity option", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "error",
@@ -215,6 +230,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -225,7 +241,8 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should pass display-only-failures flag when true", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -233,6 +250,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -242,7 +260,8 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should not pass display-only-failures flag when false", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -250,6 +269,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -259,7 +279,8 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should pass verbose flag when true", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -267,6 +288,7 @@ describe("Spectral Lint Functions", () => {
           verbose: true,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -276,7 +298,8 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should use ignore stdio when globals.silent is true", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -284,6 +307,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: true },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -293,7 +317,8 @@ describe("Spectral Lint Functions", () => {
     it("should suppress wrapper logging when quiet", () => {
       const logSpy = vi.spyOn(console, "log");
 
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -301,6 +326,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: true, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -311,7 +337,8 @@ describe("Spectral Lint Functions", () => {
     it("should show wrapper logging when not quiet", () => {
       const logSpy = vi.spyOn(console, "log");
 
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -319,6 +346,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       lintSpectral(run);
@@ -329,7 +357,8 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should forward passthrough args to spectral", () => {
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -352,7 +381,8 @@ describe("Spectral Lint Functions", () => {
         status: 1,
       });
 
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -360,6 +390,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       expect(lintSpectral(run)).toBe(1);
@@ -371,7 +402,8 @@ describe("Spectral Lint Functions", () => {
         error: new Error("spawn failed"),
       });
 
-      const run: SpectralLintRun = {
+      const run: ExecuteParams<SpectralLintCliOptions> = {
+        input: "openapi/openapi.yaml",
         options: {
           format: "stylish",
           failSeverity: "warn",
@@ -379,6 +411,7 @@ describe("Spectral Lint Functions", () => {
           verbose: false,
         },
         globals: { quiet: false, silent: false },
+        passthrough: [],
       };
 
       expect(() => lintSpectral(run)).toThrow("spawn failed");

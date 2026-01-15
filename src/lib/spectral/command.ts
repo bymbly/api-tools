@@ -3,61 +3,24 @@ import {
   CommandUnknownOpts,
   Option,
 } from "@commander-js/extra-typings";
-import fs from "node:fs";
-import { getGlobals, parsePassthrough, resolveStdio } from "../cli/runtime.js";
-import { lintSpectral, spectralPassthrough } from "./lint.js";
-
-const VALID_OUTPUT_FORMATS = [
-  "json",
-  "stylish",
-  "junit",
-  "html",
-  "text",
-  "teamcity",
-  "pretty",
-  "github-actions",
-  "sarif",
-  "markdown",
-  "gitlab",
-] as const;
-
-const VALID_FAIL_SEVERITIES = ["error", "warn", "info", "hint"] as const;
-
-export type OutputFormat = (typeof VALID_OUTPUT_FORMATS)[number];
-export type FailSeverity = (typeof VALID_FAIL_SEVERITIES)[number];
-
-export interface SpectralLintCliOptions {
-  format: OutputFormat;
-  output?: string;
-  ruleset?: string;
-  failSeverity: FailSeverity;
-  displayOnlyFailures: boolean;
-  verbose: boolean;
-  openapi?: boolean;
-  asyncapi?: boolean;
-  arazzo?: boolean;
-}
-
-interface SpecType {
-  flag: keyof Pick<SpectralLintCliOptions, "openapi" | "asyncapi" | "arazzo">;
-  defaultPath: string;
-  name: string;
-}
-
-const SPEC_TYPES: SpecType[] = [
-  { flag: "openapi", defaultPath: "openapi/openapi.yaml", name: "OpenAPI" },
-  {
-    flag: "asyncapi",
-    defaultPath: "asyncapi/asyncapi.yaml",
-    name: "AsyncAPI",
-  },
-  { flag: "arazzo", defaultPath: "arazzo/arazzo.yaml", name: "Arazzo" },
-];
+import { handleRawPassthrough, runMultiInputCommand } from "../cli/helpers.js";
+import { resolveDocuments } from "../cli/runtime.js";
+import {
+  FailSeverity,
+  lintSpectral,
+  OutputFormat,
+  SpectralLintCliOptions,
+  spectralPassthrough,
+  VALID_FAIL_SEVERITIES,
+  VALID_OUTPUT_FORMATS,
+} from "./lint.js";
 
 export const spectralCommand = new Command("spectral")
   .description("Spectral-related commands")
   .allowExcessArguments(true)
-  .action(rawSpectral)
+  .action((opts, cmd) => {
+    handleRawPassthrough(opts, cmd, spectralPassthrough);
+  })
 
   .addCommand(
     new Command("lint")
@@ -96,77 +59,16 @@ export const spectralCommand = new Command("spectral")
       .action(runSpectralLint),
   );
 
-function rawSpectral(_options: unknown, cmd: Command): void {
-  const [, passthrough] = parsePassthrough(process.argv, undefined);
-
-  if (passthrough.length === 0) {
-    cmd.help();
-  }
-
-  const globals = getGlobals(cmd);
-  const stdio = resolveStdio(globals);
-
-  const code = spectralPassthrough(passthrough, stdio);
-  process.exitCode = code;
-}
-
 function runSpectralLint(
   input: string | undefined,
   options: SpectralLintCliOptions,
   cmd: CommandUnknownOpts,
 ): void {
-  const globals = getGlobals(cmd);
-
-  let passthrough: string[];
-  [input, passthrough] = parsePassthrough(process.argv, input);
-
-  const documentsToLint = determineDocumentsToLint(input, options);
-
-  if (documentsToLint.length === 0) {
-    console.error("❌ No documents found to lint");
-    process.exitCode = 1;
-    return;
-  }
-
-  const results: { input: string; exitCode: number }[] = [];
-
-  for (const docInput of documentsToLint) {
-    const code = lintSpectral({
-      input: docInput,
-      options,
-      globals,
-      passthrough,
-    });
-
-    results.push({ input: docInput, exitCode: code });
-  }
-
-  const failedDocs = results.filter((r) => r.exitCode !== 0);
-
-  if (failedDocs.length > 0) {
-    process.exitCode = 1;
-  } else {
-    process.exitCode = 0;
-  }
-}
-function determineDocumentsToLint(
-  input: string | undefined,
-  options: SpectralLintCliOptions,
-): string[] {
-  // if explicit input provided, only use that
-  if (input) return [input];
-
-  const requestedTypes = SPEC_TYPES.filter((type) => options[type.flag]);
-
-  const typesToCheck = requestedTypes.length > 0 ? requestedTypes : SPEC_TYPES;
-
-  return typesToCheck
-    .filter((type) => {
-      try {
-        return fs.existsSync(type.defaultPath);
-      } catch {
-        return false;
-      }
-    })
-    .map((type) => type.defaultPath);
+  runMultiInputCommand({
+    input,
+    options,
+    cmd,
+    resolveInputs: resolveDocuments,
+    execute: lintSpectral,
+  });
 }

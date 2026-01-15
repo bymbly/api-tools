@@ -55,7 +55,7 @@ describe("Spectral Lint Integration Tests", () => {
 
   describe("auto-detection", () => {
     it("should lint all found documents when no flags specified", async () => {
-      // Create all three types
+      // create all three types
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -92,18 +92,18 @@ describe("Spectral Lint Integration Tests", () => {
     it("should fail when no documents found", async () => {
       const result = await runCli(["spectral", "lint", "--silent"]);
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("No documents found");
+      expect(result.stderr).toContain("No input documents found");
     });
 
     it("should fail if any document fails", async () => {
-      // Valid OpenAPI
+      // valid OpenAPI
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      // Invalid AsyncAPI
+      // invalid AsyncAPI
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/asyncapi/invalid/broken-spec"),
         path.join(tempDir, "asyncapi"),
@@ -123,7 +123,7 @@ describe("Spectral Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      // Also create AsyncAPI, but it shouldn't be linted
+      // also create AsyncAPI, but it shouldn't be linted
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
         path.join(tempDir, "asyncapi"),
@@ -190,7 +190,7 @@ describe("Spectral Lint Integration Tests", () => {
     });
 
     it("should fail when specified document type doesn't exist", async () => {
-      // No documents created
+      // no documents created
       const result = await runCli([
         "spectral",
         "lint",
@@ -198,7 +198,7 @@ describe("Spectral Lint Integration Tests", () => {
         "--silent",
       ]);
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("No documents found");
+      expect(result.stderr).toContain("No input documents found");
     });
   });
 
@@ -213,7 +213,7 @@ describe("Spectral Lint Integration Tests", () => {
         path.join(tempDir, "custom/spec.yaml"),
       );
 
-      // Create openapi default location too
+      // create openapi default location too
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -224,7 +224,7 @@ describe("Spectral Lint Integration Tests", () => {
         "spectral",
         "lint",
         "custom/spec.yaml",
-        "--openapi", // This should be ignored
+        "--openapi", // this should be ignored
         "--silent",
       ]);
       expect(result.exitCode).toBe(0);
@@ -240,14 +240,14 @@ describe("Spectral Lint Integration Tests", () => {
         path.join(tempDir, "custom/spec.yaml"),
       );
 
-      // Create invalid openapi at default location
+      // create invalid openapi at default location
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/invalid/broken-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      // Should pass because it only lints custom/spec.yaml
+      // should pass because it only lints custom/spec.yaml
       const result = await runCli([
         "spectral",
         "lint",
