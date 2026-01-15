@@ -25,7 +25,7 @@
     "@bymbly:registry": "https://npm.pkg.github.com"
   },
   "bin": {
-    "api-tools": "./dist/bin/api-tools.js"
+    "api-tools": "dist/bin/api-tools.js"
   },
   "scripts": {
     "dev": "npm run watch",
