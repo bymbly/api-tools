@@ -1,12 +1,18 @@
+import {
+  Command,
+  CommandUnknownOpts,
+  Option,
+} from "@commander-js/extra-typings";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ExecuteParams } from "../cli/helpers.js";
+import { ExecuteParams, runMultiInputCommand } from "../cli/helpers.js";
 import {
   DocTypeOptions,
   isQuiet,
+  resolveDocuments,
   resolveStdio,
   StdioMode,
 } from "../cli/runtime.js";
@@ -52,6 +58,51 @@ type RulesetSource = "cli" | "local" | "bundled";
 interface ResolvedRuleset {
   path?: string;
   source: RulesetSource;
+}
+
+export const lintCommand = new Command("lint")
+  .description(
+    "Validate and lint OpenAPI, AsyncAPI, and Arazzo Documents using Spectral",
+  )
+  .argument("[input]", "Document path (default: auto-detect)")
+
+  .option("--openapi", "Lint OpenAPI document at openapi/openapi.yaml", false)
+  .option(
+    "--asyncapi",
+    "Lint AsyncAPI document at asyncapi/asyncapi.yaml",
+    false,
+  )
+  .option("--arazzo", "Lint Arazzo document at arazzo/arazzo.yaml", false)
+
+  .addOption(
+    new Option("--format <format>", "Output format")
+      .choices([...VALID_OUTPUT_FORMATS])
+      .default("stylish" satisfies OutputFormat),
+  )
+  .option("--output <file>", "Write output to a file")
+  .option("--ruleset <file>", "Ruleset file path (overrides auto/bundled)")
+  .addOption(
+    new Option("--fail-severity <level>", "Fail severity threshold")
+      .choices([...VALID_FAIL_SEVERITIES])
+      .default("warn" satisfies FailSeverity),
+  )
+  .option("--display-only-failures", "Display only failing results", false)
+  .option("--verbose", "Enable verbose output", false)
+  .allowExcessArguments(true)
+  .action(runSpectralLint);
+
+function runSpectralLint(
+  input: string | undefined,
+  options: SpectralLintCliOptions,
+  cmd: CommandUnknownOpts,
+): void {
+  runMultiInputCommand({
+    input,
+    options,
+    cmd,
+    resolveInputs: resolveDocuments,
+    execute: lintSpectral,
+  });
 }
 
 export function spectralPassthrough(args: string[], stdio: StdioMode): number {
