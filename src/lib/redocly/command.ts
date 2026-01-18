@@ -1,5 +1,5 @@
 import { Command } from "@commander-js/extra-typings";
-import { handleRawPassthrough } from "../cli/helpers.js";
+import { createInitCommand, handleRawPassthrough } from "../cli/helpers.js";
 import { run } from "./cli.js";
 import { lintCommand } from "./lint.js";
 
@@ -9,4 +9,5 @@ export const redoclyCommand = new Command("redocly")
   .action((opts, cmd) => {
     handleRawPassthrough(opts, cmd, run);
   })
+  .addCommand(createInitCommand("redocly.yaml"))
   .addCommand(lintCommand);
