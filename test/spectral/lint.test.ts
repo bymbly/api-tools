@@ -1,25 +1,19 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ExecuteParams } from "../../src/lib/cli/helpers.js";
 import { run } from "../../src/lib/spectral/cli.js";
 import type { Options } from "../../src/lib/spectral/lint.js";
 import { lint } from "../../src/lib/spectral/lint.js";
-import { getSpawnCall } from "../helper.js";
+import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
 
 vi.mock("node:child_process");
 
-function okSpawnResult() {
-  return {
-    pid: 123,
-    output: [],
-    stdout: Buffer.from(""),
-    stderr: Buffer.from(""),
-    status: 0,
-    signal: null,
-    error: undefined,
-  };
-}
+const createRun = withDefaults<Options>("openapi/openapi.yaml", {
+  format: "stylish",
+  failSeverity: "warn",
+  displayOnlyFailures: false,
+  verbose: false,
+});
 
 describe("Spectral Lint Functions", () => {
   beforeEach(() => {
@@ -66,17 +60,7 @@ describe("Spectral Lint Functions", () => {
 
   describe("lint", () => {
     it("should use provided input", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun();
 
       expect(lint(run)).toBe(0);
 
@@ -85,17 +69,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should use custom input when provided", () => {
-      const run: ExecuteParams<Options> = {
-        input: "custom/spec.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun({ input: "custom/spec.yaml" });
 
       lint(run);
 
@@ -104,17 +78,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should pass format option to spectral", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "json",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun({ options: { format: "json" } });
 
       lint(run);
 
@@ -124,18 +88,9 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should pass output option when specified", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "json",
-          output: "results.json",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun({
+        options: { format: "json", output: "results.json" },
+      });
 
       lint(run);
 
@@ -145,18 +100,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should use CLI-provided ruleset when specified", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          ruleset: "custom/spectral.yaml",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun({ options: { ruleset: "custom/spectral.yaml" } });
 
       lint(run);
 
@@ -180,17 +124,7 @@ describe("Spectral Lint Functions", () => {
         },
       ]);
 
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun();
 
       lint(run);
 
@@ -199,17 +133,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should use bundled ruleset when no local config", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun();
 
       lint(run);
 
@@ -219,17 +143,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should pass fail-severity option", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "error",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun({ options: { failSeverity: "error" } });
 
       lint(run);
 
@@ -239,17 +153,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should pass display-only-failures flag when true", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: true,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun({ options: { displayOnlyFailures: true } });
 
       lint(run);
 
@@ -258,17 +162,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should not pass display-only-failures flag when false", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun({ options: { displayOnlyFailures: false } });
 
       lint(run);
 
@@ -277,17 +171,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should pass verbose flag when true", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: true,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun({ options: { verbose: true } });
 
       lint(run);
 
@@ -296,17 +180,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should use ignore stdio when globals.silent is true", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: true },
-        passthrough: [],
-      };
+      const run = createRun({ globals: { quiet: false, silent: true } });
 
       lint(run);
       getSpawnCall("ignore");
@@ -315,17 +189,7 @@ describe("Spectral Lint Functions", () => {
     it("should suppress wrapper logging when quiet", () => {
       const logSpy = vi.spyOn(console, "log");
 
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: true, silent: false },
-        passthrough: [],
-      };
+      const run = createRun({ globals: { quiet: true, silent: false } });
 
       lint(run);
 
@@ -335,17 +199,7 @@ describe("Spectral Lint Functions", () => {
     it("should show wrapper logging when not quiet", () => {
       const logSpy = vi.spyOn(console, "log");
 
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun({ globals: { quiet: false, silent: false } });
 
       lint(run);
 
@@ -355,17 +209,9 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should forward passthrough args to spectral", () => {
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
+      const run = createRun({
         passthrough: ["--ignore-unknown-format"],
-      };
+      });
 
       lint(run);
 
@@ -379,17 +225,7 @@ describe("Spectral Lint Functions", () => {
         status: 1,
       });
 
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun();
 
       expect(lint(run)).toBe(1);
     });
@@ -400,17 +236,7 @@ describe("Spectral Lint Functions", () => {
         error: new Error("spawn failed"),
       });
 
-      const run: ExecuteParams<Options> = {
-        input: "openapi/openapi.yaml",
-        options: {
-          format: "stylish",
-          failSeverity: "warn",
-          displayOnlyFailures: false,
-          verbose: false,
-        },
-        globals: { quiet: false, silent: false },
-        passthrough: [],
-      };
+      const run = createRun();
 
       expect(() => lint(run)).toThrow("spawn failed");
     });
