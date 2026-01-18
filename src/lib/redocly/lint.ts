@@ -36,7 +36,7 @@ export const VALID_OUTPUT_FORMATS = [
 
 export type OutputFormat = (typeof VALID_OUTPUT_FORMATS)[number];
 
-export interface RedoclyLintCliOptions extends DocTypeOptions {
+export interface Options extends DocTypeOptions {
   format: OutputFormat;
   config?: string;
 }
@@ -66,7 +66,7 @@ export const lintCommand = new Command("lint")
 
 function runRedoclyLint(
   input: string | undefined,
-  options: RedoclyLintCliOptions,
+  options: Options,
   cmd: CommandUnknownOpts,
 ): void {
   runMultiDocumentCommand({
@@ -78,7 +78,7 @@ function runRedoclyLint(
   });
 }
 
-function lint(params: ExecuteParams<RedoclyLintCliOptions>): number {
+export function lint(params: ExecuteParams<Options>): number {
   const { input, options, globals } = params;
 
   const config = resolveConfig(
@@ -126,7 +126,7 @@ Then re-run this command.
 }
 
 function buildArgs(
-  params: ExecuteParams<RedoclyLintCliOptions>,
+  params: ExecuteParams<Options>,
   config: ResolvedConfig,
 ): string[] {
   const { input, options, passthrough } = params;
