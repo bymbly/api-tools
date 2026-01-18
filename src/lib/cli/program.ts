@@ -1,4 +1,5 @@
 import { Command } from "@commander-js/extra-typings";
+import { redoclyCommand } from "../redocly/command.js";
 import { spectralCommand } from "../spectral/command.js";
 
 export interface GlobalOptions {
@@ -27,5 +28,6 @@ export function buildProgram() {
       const opts = thisCommand.opts();
       if (opts.cwd) process.chdir(opts.cwd);
     })
-    .addCommand(spectralCommand);
+    .addCommand(spectralCommand)
+    .addCommand(redoclyCommand);
 }
