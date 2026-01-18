@@ -1,140 +1,202 @@
-import { execSync } from "child_process";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getOptions, lint } from "../../src/lib/redocly/lint.js";
+import { run } from "../../src/lib/redocly/cli.js";
+import { lint, Options } from "../../src/lib/redocly/lint.js";
+import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
 
-vi.mock("child_process");
+vi.mock("node:child_process");
 
-describe("Lint Functions", () => {
-  const originalEnv = process.env;
+const createRun = withDefaults<Options>("openapi/openapi.yaml", {
+  format: "codeframe",
+});
 
+describe("Redocly Lint Functions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env = { ...originalEnv };
+    vi.spyOn(console, "log").mockImplementation(vi.fn());
+    vi.spyOn(console, "error").mockImplementation(vi.fn());
+    vi.spyOn(fs, "readdirSync").mockReturnValue([]);
+    vi.mocked(spawnSync).mockReturnValue(okSpawnResult());
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    vi.restoreAllMocks();
   });
 
-  describe("getOptions", () => {
-    it("should return default options when no env vars are set", () => {
-      const options = getOptions();
+  describe("run", () => {
+    it("should pass args directly to redocly", () => {
+      const exitCode = run(
+        ["lint", "spec.yaml", "--format", "json"],
+        "inherit",
+      );
 
-      expect(options).toEqual({
-        input: "openapi/openapi.yaml",
-        format: "codeframe",
-        configPath: undefined,
+      expect(exitCode).toBe(0);
+      const call = getSpawnCall("inherit");
+      expect(call.args).toEqual(
+        expect.arrayContaining(["lint", "spec.yaml", "--format", "json"]),
+      );
+    });
+
+    it("should use ignore stdio when specified", () => {
+      run(["--version"], "ignore");
+      getSpawnCall("ignore");
+    });
+
+    it("should return non-zero exit code on failure", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        status: 2,
       });
-    });
 
-    it("should use OPENAPI_INPUT env var when set", () => {
-      process.env.OPENAPI_INPUT = "api/spec.yaml";
-
-      const options = getOptions();
-
-      expect(options.input).toBe("api/spec.yaml");
-    });
-
-    it("should use OPENAPI_FORMAT env var when set", () => {
-      process.env.OPENAPI_FORMAT = "github-actions";
-
-      const options = getOptions();
-
-      expect(options.format).toBe("github-actions");
-    });
-
-    it("should use OPENAPI_CONFIG env var when set", () => {
-      process.env.OPENAPI_CONFIG = ".config/redocly.yaml";
-
-      const options = getOptions();
-
-      expect(options.configPath).toBe(".config/redocly.yaml");
-    });
-
-    it("should default to codeframe format when OPENAPI_FORMAT is invalid", () => {
-      process.env.OPENAPI_FORMAT = "invalid-format";
-
-      const options = getOptions();
-
-      expect(options.format).toBe("codeframe");
-    });
-
-    it("should handle all environment variables together", () => {
-      process.env.OPENAPI_INPUT = "custom/spec.yaml";
-      process.env.OPENAPI_FORMAT = "json";
-      process.env.OPENAPI_CONFIG = "custom/redocly.yaml";
-
-      const options = getOptions();
-
-      expect(options).toEqual({
-        input: "custom/spec.yaml",
-        format: "json",
-        configPath: "custom/redocly.yaml",
-      });
+      const exitCode = run(["lint", "bad.yaml"], "inherit");
+      expect(exitCode).toBe(2);
     });
   });
 
   describe("lint", () => {
-    beforeEach(() => {
-      vi.mocked(execSync).mockReturnValue(Buffer.from(""));
+    it("should use provided input", () => {
+      const run = createRun();
+
+      expect(lint(run)).toBe(0);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("openapi/openapi.yaml");
     });
 
-    it("should call execSync with correct default parameters", () => {
-      lint();
+    it("should use custom input when provided", () => {
+      const run = createRun({ input: "custom/spec.yaml" });
 
-      expect(execSync).toHaveBeenCalledWith(
-        "npx --no @redocly/cli lint openapi/openapi.yaml --format codeframe",
-        { stdio: "inherit" },
-      );
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("custom/spec.yaml");
     });
 
-    it("should use custom environment variables", () => {
-      process.env.OPENAPI_INPUT = "api/spec.yaml";
-      process.env.OPENAPI_FORMAT = "json";
+    it("should pass format option to redocly", () => {
+      const run = createRun({ options: { format: "json" } });
 
-      lint();
+      lint(run);
 
-      expect(execSync).toHaveBeenCalledWith(
-        "npx --no @redocly/cli lint api/spec.yaml --format json",
-        { stdio: "inherit" },
-      );
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--format");
+      expect(call.args).toContain("json");
     });
 
-    it("should include --config flag when configPath is set", () => {
-      process.env.OPENAPI_CONFIG = ".config/redocly.yaml";
+    it("should use CLI-provided config when specified", () => {
+      const run = createRun({ options: { config: "custom/redocly.yaml" } });
 
-      lint();
+      lint(run);
 
-      const command = vi.mocked(execSync).mock.calls[0][0];
-      expect(command).toContain("--config .config/redocly.yaml");
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--config");
+      expect(call.args).toContain("custom/redocly.yaml");
     });
 
-    it("should not include --config flag when configPath is not set", () => {
-      lint();
+    it("should not pass config when local config exists", () => {
+      vi.spyOn(fs, "readdirSync").mockReturnValue([
+        {
+          name: Buffer.from("redocly.yaml"),
+          parentPath: "",
+          isFile: () => true,
+          isDirectory: () => false,
+          isBlockDevice: () => false,
+          isCharacterDevice: () => false,
+          isSymbolicLink: () => false,
+          isFIFO: () => false,
+          isSocket: () => false,
+        },
+      ]);
 
-      const command = vi.mocked(execSync).mock.calls[0][0];
-      expect(command).not.toContain("--config");
+      const run = createRun();
+
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).not.toContain("--config");
     });
 
-    it("should exit with status 1 when linting fails", () => {
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
-      const mockError = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => vi.fn());
+    it("should use bundled config when no local config", () => {
+      const run = createRun();
 
-      vi.mocked(execSync).mockImplementation(() => {
-        throw new Error("Lint failed");
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      const configIndex = call.args.indexOf("--config");
+      expect(call.args[configIndex + 1]).toContain("defaults/redocly.yaml");
+    });
+
+    it("should block --generate-ignore-file with bundled config", () => {
+      const run = createRun({
+        passthrough: ["--generate-ignore-file"],
       });
 
-      lint();
+      expect(lint(run)).toBe(1);
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining("Cannot use --generate-ignore-file"),
+      );
+    });
 
-      expect(mockExit).toHaveBeenCalledWith(1);
-      expect(mockError).toHaveBeenCalledWith("❌ Linting failed!");
+    it("should use ignore stdio when globals.silent is true", () => {
+      const run = createRun({ globals: { quiet: false, silent: true } });
 
-      mockExit.mockRestore();
-      mockError.mockRestore();
+      lint(run);
+      getSpawnCall("ignore");
+    });
+
+    it("should suppress wrapper logging when quiet", () => {
+      const logSpy = vi.spyOn(console, "log");
+
+      const run = createRun({ globals: { quiet: true, silent: false } });
+
+      lint(run);
+
+      expect(logSpy).not.toHaveBeenCalled();
+    });
+
+    it("should show wrapper logging when not quiet", () => {
+      const logSpy = vi.spyOn(console, "log");
+
+      const run = createRun({ globals: { quiet: false, silent: false } });
+
+      lint(run);
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining("🔍 Redocly lint"),
+      );
+    });
+
+    it("should forward passthrough args to redocly", () => {
+      const run = createRun({
+        passthrough: ["--ignore-unknown-format"],
+      });
+
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--ignore-unknown-format");
+    });
+
+    it("should return non-zero exit code on lint failure", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        status: 1,
+      });
+
+      const run = createRun();
+
+      expect(lint(run)).toBe(1);
+    });
+
+    it("should throw when spawnSync errors", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        error: new Error("spawn failed"),
+      });
+
+      const run = createRun();
+
+      expect(() => lint(run)).toThrow("spawn failed");
     });
   });
 });
