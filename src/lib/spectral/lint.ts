@@ -5,7 +5,7 @@ import {
 } from "@commander-js/extra-typings";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ExecuteParams, runMultiInputCommand } from "../cli/helpers.js";
+import { ExecuteParams, runMultiDocumentCommand } from "../cli/helpers.js";
 import {
   DocTypeOptions,
   isQuiet,
@@ -88,11 +88,11 @@ function runSpectralLint(
   options: SpectralLintCliOptions,
   cmd: CommandUnknownOpts,
 ): void {
-  runMultiInputCommand({
+  runMultiDocumentCommand({
     input,
     options,
     cmd,
-    resolveInputs: resolveDocuments,
+    resolveDocuments: resolveDocuments,
     execute: lint,
   });
 }

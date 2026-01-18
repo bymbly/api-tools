@@ -6,6 +6,7 @@ import { GlobalOptions } from "./program.js";
 import {
   getGlobals,
   parsePassthrough,
+  ResolvedDocuments,
   resolveStdio,
   StdioMode,
 } from "./runtime.js";
@@ -40,23 +41,23 @@ export interface ExecuteParams<T> {
 
 export type Execute<T> = (params: ExecuteParams<T>) => number;
 
-export type ResolveInputs<T> = (
+export type ResolveDocuments<T> = (
   input: string | undefined,
   options: T,
-) => string[];
+) => ResolvedDocuments;
 
-export interface SingleInputRun<T> {
+export interface SingleDocumentRun<T> {
   input: string | undefined;
   options: T;
   cmd: CommandUnknownOpts;
   execute: Execute<T>;
 }
 
-export interface MultiInputRun<T> extends SingleInputRun<T> {
-  resolveInputs: ResolveInputs<T>;
+export interface MultiDocumentRun<T> extends SingleDocumentRun<T> {
+  resolveDocuments: ResolveDocuments<T>;
 }
 
-export function runSingleInputCommand<T>(run: SingleInputRun<T>): void {
+export function runSingleDocumentCommand<T>(run: SingleDocumentRun<T>): void {
   const ctx = getRunContext(run);
 
   // fallback to default input if ctx.input is undefined
@@ -64,7 +65,13 @@ export function runSingleInputCommand<T>(run: SingleInputRun<T>): void {
   const one = ctx.input ?? run.input;
 
   if (!one) {
-    console.error("❌ No input document specified");
+    console.error(
+      `
+❌ Error: no input document specified
+
+Provide an input path or run with --help for usage.
+`.trim(),
+    );
     process.exitCode = 1;
     return;
   }
@@ -72,18 +79,35 @@ export function runSingleInputCommand<T>(run: SingleInputRun<T>): void {
   processInputs(run, ctx, [one]);
 }
 
-export function runMultiInputCommand<T>(run: MultiInputRun<T>): void {
+export function runMultiDocumentCommand<T>(run: MultiDocumentRun<T>): void {
   const ctx = getRunContext(run);
 
-  const documents = run.resolveInputs(ctx.input, run.options);
+  const resolved = run.resolveDocuments(ctx.input, run.options);
 
-  if (documents.length === 0) {
-    console.error("❌ No input documents found to process");
+  if (resolved.inputs.length === 0) {
+    const checkedList = resolved.checked.map((p) => `  ${p}`).join("\n");
+    const scope =
+      resolved.requested.length > 0 && resolved.requested[0] !== "explicit"
+        ? resolved.requested.join(", ")
+        : "specification";
+
+    console.error(
+      `
+❌ Error: no input documents found
+
+No input was provided, and no default ${scope} files were found in the current directory:
+
+${checkedList}
+
+Provide an input path or create one of the above files and try again.
+`.trim(),
+    );
+
     process.exitCode = 1;
     return;
   }
 
-  processInputs(run, ctx, documents);
+  processInputs(run, ctx, resolved.inputs);
 }
 
 interface RunContext {
@@ -92,7 +116,7 @@ interface RunContext {
   passthrough: readonly string[];
 }
 
-function getRunContext<T>(run: SingleInputRun<T>): RunContext {
+function getRunContext<T>(run: SingleDocumentRun<T>): RunContext {
   const globals = getGlobals(run.cmd);
   const [input, passthrough] = parsePassthrough(process.argv, run.input);
 
@@ -100,7 +124,7 @@ function getRunContext<T>(run: SingleInputRun<T>): RunContext {
 }
 
 function processInputs<T>(
-  run: SingleInputRun<T>,
+  run: SingleDocumentRun<T>,
   ctx: RunContext,
   inputs: readonly string[],
 ): void {
@@ -146,7 +170,18 @@ Use --force to overwrite the existing file.
     fs.copyFileSync(bundledPath, targetPath);
     console.log(`✅ Created ${configFilename}`);
   } catch (error) {
-    console.error(`❌ Failed to create config file:`, error);
+    const message = errorMessage(error);
+    console.error(
+      `
+❌ Error: failed to create ${configFilename}
+
+${message}
+`.trim(),
+    );
     process.exitCode = 1;
   }
+}
+
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

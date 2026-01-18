@@ -59,12 +59,20 @@ export const SPEC_TYPES: DocType[] = [
   { flag: "arazzo", defaultPath: "arazzo/arazzo.yaml", name: "Arazzo" },
 ];
 
+export interface ResolvedDocuments {
+  inputs: string[];
+  checked: string[];
+  requested: string[];
+}
+
 export function resolveDocuments(
   input: string | undefined,
   options: DocTypeOptions,
-): string[] {
+): ResolvedDocuments {
   // if explicit input provided, only use that
-  if (input) return [input];
+  if (input) {
+    return { inputs: [input], checked: [input], requested: ["explicit"] };
+  }
 
   const requestedTypes = SPEC_TYPES.filter(
     (type) => options[type.flag as keyof DocTypeOptions],
@@ -72,7 +80,10 @@ export function resolveDocuments(
 
   const typesToCheck = requestedTypes.length > 0 ? requestedTypes : SPEC_TYPES;
 
-  return typesToCheck
+  const checked = typesToCheck.map((t) => t.defaultPath);
+  const requested = typesToCheck.map((t) => t.name);
+
+  const inputs = typesToCheck
     .filter((type) => {
       try {
         return fs.existsSync(type.defaultPath);
@@ -81,6 +92,8 @@ export function resolveDocuments(
       }
     })
     .map((type) => type.defaultPath);
+
+  return { inputs, checked, requested };
 }
 
 export type ConfigSource = "cli" | "local" | "bundled";

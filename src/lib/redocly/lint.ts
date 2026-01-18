@@ -5,7 +5,7 @@ import {
 } from "@commander-js/extra-typings";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ExecuteParams, runMultiInputCommand } from "../cli/helpers.js";
+import { ExecuteParams, runMultiDocumentCommand } from "../cli/helpers.js";
 import {
   DocTypeOptions,
   isQuiet,
@@ -69,11 +69,11 @@ function runRedoclyLint(
   options: RedoclyLintCliOptions,
   cmd: CommandUnknownOpts,
 ): void {
-  runMultiInputCommand({
+  runMultiDocumentCommand({
     input,
     options,
     cmd,
-    resolveInputs: resolveDocuments,
+    resolveDocuments: resolveDocuments,
     execute: lint,
   });
 }
@@ -86,6 +86,29 @@ function lint(params: ExecuteParams<RedoclyLintCliOptions>): number {
     REDOCLY_CONFIG_REGEX,
     defaultConfigPath,
   );
+
+  // prevent using --generate-ignore-file with bundled config
+  // since redocly writes the generated ignore file to the config's directory
+  // and this would be difficult for users to find/manage
+  if (
+    config.source === "bundled" &&
+    params.passthrough.some((arg) => arg.includes("--generate-ignore-file"))
+  ) {
+    console.error(
+      `
+❌ Error: Cannot use --generate-ignore-file with bundled config
+
+The --generate-ignore-file option requires a local Redocly configuration file, but no local config was found.
+
+To generate a starter config, run:
+
+    api-tools redocly init
+
+Then re-run this command.
+`.trim(),
+    );
+    return 1;
+  }
 
   const redoclyArgs = buildArgs(params, config);
 
