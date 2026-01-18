@@ -97,7 +97,7 @@ function runSpectralLint(
   });
 }
 
-function lint(params: ExecuteParams<SpectralLintCliOptions>): number {
+export function lint(params: ExecuteParams<SpectralLintCliOptions>): number {
   const { input, options, globals } = params;
 
   const ruleset = resolveConfig(

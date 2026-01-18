@@ -2,11 +2,9 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ExecuteParams } from "../../src/lib/cli/helpers.js";
+import { run } from "../../src/lib/spectral/cli.js";
 import type { SpectralLintCliOptions } from "../../src/lib/spectral/lint.js";
-import {
-  lintSpectral,
-  spectralPassthrough,
-} from "../../src/lib/spectral/lint.js";
+import { lint } from "../../src/lib/spectral/lint.js";
 import { getSpawnCall } from "../helper.js";
 
 vi.mock("node:child_process");
@@ -36,9 +34,9 @@ describe("Spectral Lint Functions", () => {
     vi.restoreAllMocks();
   });
 
-  describe("spectralPassthrough", () => {
+  describe("run", () => {
     it("should pass args directly to spectral", () => {
-      const exitCode = spectralPassthrough(
+      const exitCode = run(
         ["lint", "spec.yaml", "--format", "json"],
         "inherit",
       );
@@ -51,7 +49,7 @@ describe("Spectral Lint Functions", () => {
     });
 
     it("should use ignore stdio when specified", () => {
-      spectralPassthrough(["--version"], "ignore");
+      run(["--version"], "ignore");
       getSpawnCall("ignore");
     });
 
@@ -61,12 +59,12 @@ describe("Spectral Lint Functions", () => {
         status: 2,
       });
 
-      const exitCode = spectralPassthrough(["lint", "bad.yaml"], "inherit");
+      const exitCode = run(["lint", "bad.yaml"], "inherit");
       expect(exitCode).toBe(2);
     });
   });
 
-  describe("lintSpectral", () => {
+  describe("lint", () => {
     it("should use provided input", () => {
       const run: ExecuteParams<SpectralLintCliOptions> = {
         input: "openapi/openapi.yaml",
@@ -80,7 +78,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      expect(lintSpectral(run)).toBe(0);
+      expect(lint(run)).toBe(0);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("openapi/openapi.yaml");
@@ -99,7 +97,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("custom/spec.yaml");
@@ -118,7 +116,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--format");
@@ -139,7 +137,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--output");
@@ -160,7 +158,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--ruleset");
@@ -194,7 +192,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).not.toContain("--ruleset");
@@ -213,7 +211,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       const rulesetIndex = call.args.indexOf("--ruleset");
@@ -233,7 +231,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--fail-severity");
@@ -253,7 +251,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--display-only-failures");
@@ -272,7 +270,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).not.toContain("--display-only-failures");
@@ -291,7 +289,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--verbose");
@@ -310,7 +308,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
       getSpawnCall("ignore");
     });
 
@@ -329,7 +327,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       expect(logSpy).not.toHaveBeenCalled();
     });
@@ -349,7 +347,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       expect(logSpy).toHaveBeenCalledWith(
         expect.stringContaining("🔍 Spectral lint"),
@@ -369,7 +367,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: ["--ignore-unknown-format"],
       };
 
-      lintSpectral(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--ignore-unknown-format");
@@ -393,7 +391,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      expect(lintSpectral(run)).toBe(1);
+      expect(lint(run)).toBe(1);
     });
 
     it("should throw when spawnSync errors", () => {
@@ -414,7 +412,7 @@ describe("Spectral Lint Functions", () => {
         passthrough: [],
       };
 
-      expect(() => lintSpectral(run)).toThrow("spawn failed");
+      expect(() => lint(run)).toThrow("spawn failed");
     });
   });
 });
