@@ -92,7 +92,7 @@ describe("Spectral Lint Integration Tests", () => {
     it("should fail when no documents found", async () => {
       const result = await runCli(["spectral", "lint", "--silent"]);
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("No input documents found");
+      expect(result.stderr).toContain("no input documents found");
     });
 
     it("should fail if any document fails", async () => {
@@ -198,7 +198,7 @@ describe("Spectral Lint Integration Tests", () => {
         "--silent",
       ]);
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("No input documents found");
+      expect(result.stderr).toContain("no input documents found");
     });
   });
 
