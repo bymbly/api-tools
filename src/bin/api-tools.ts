@@ -6,9 +6,7 @@ buildProgram()
   .catch((error: unknown) => {
     process.exitCode = 1;
 
-    if (error instanceof Error) {
-      console.error(`❌ Error: ${error.message}`);
-    } else {
-      console.error("❌ Error:", error);
-    }
+    const message = error instanceof Error ? error.message : String(error);
+
+    console.error(`❌ Error: ${message}`);
   });
