@@ -374,6 +374,17 @@ describe("Spectral Lint Integration Tests", () => {
       const result = await runCli(["spectral", "lint", "--arazzo", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
+
+    it("should fail for invalid Arazzo spec", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/arazzo/invalid/broken-spec"),
+        path.join(tempDir, "arazzo"),
+        { recursive: true },
+      );
+
+      const result = await runCli(["spectral", "lint", "--arazzo", "--silent"]);
+      expect(result.exitCode).not.toBe(0);
+    });
   });
 
   describe("custom options", () => {
@@ -515,6 +526,12 @@ describe("Spectral Lint Integration Tests", () => {
         "--ignore-unknown-format",
       ]);
       expect(result.exitCode).toBe(0);
+    });
+
+    it("should create config file with init command", async () => {
+      const result = await runCli(["spectral", "init"]);
+      expect(result.exitCode).toBe(0);
+      expect(fs.existsSync(path.join(tempDir, "spectral.yaml"))).toBe(true);
     });
 
     it("should respect --cwd flag", async () => {
