@@ -43,7 +43,7 @@ export const VALID_FAIL_SEVERITIES = ["error", "warn", "info", "hint"] as const;
 export type OutputFormat = (typeof VALID_OUTPUT_FORMATS)[number];
 export type FailSeverity = (typeof VALID_FAIL_SEVERITIES)[number];
 
-export interface SpectralLintCliOptions extends DocTypeOptions {
+export interface Options extends DocTypeOptions {
   format: OutputFormat;
   output?: string;
   ruleset?: string;
@@ -85,7 +85,7 @@ export const lintCommand = new Command("lint")
 
 function runSpectralLint(
   input: string | undefined,
-  options: SpectralLintCliOptions,
+  options: Options,
   cmd: CommandUnknownOpts,
 ): void {
   runMultiDocumentCommand({
@@ -97,7 +97,7 @@ function runSpectralLint(
   });
 }
 
-export function lint(params: ExecuteParams<SpectralLintCliOptions>): number {
+export function lint(params: ExecuteParams<Options>): number {
   const { input, options, globals } = params;
 
   const ruleset = resolveConfig(
@@ -130,7 +130,7 @@ export function lint(params: ExecuteParams<SpectralLintCliOptions>): number {
 }
 
 function buildArgs(
-  params: ExecuteParams<SpectralLintCliOptions>,
+  params: ExecuteParams<Options>,
   ruleset: ResolvedConfig,
 ): string[] {
   const { input, options, passthrough } = params;
