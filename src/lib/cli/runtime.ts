@@ -59,17 +59,15 @@ export const SPEC_TYPES: DocType[] = [
   { flag: "arazzo", defaultPath: "arazzo/arazzo.yaml", name: "Arazzo" },
 ];
 
-export interface ResolverParams {
-  input: string | undefined;
-  options: DocTypeOptions;
-}
-
-export function resolveDocuments(params: ResolverParams): string[] {
+export function resolveDocuments(
+  input: string | undefined,
+  options: DocTypeOptions,
+): string[] {
   // if explicit input provided, only use that
-  if (params.input) return [params.input];
+  if (input) return [input];
 
   const requestedTypes = SPEC_TYPES.filter(
-    (type) => params.options[type.flag as keyof DocTypeOptions],
+    (type) => options[type.flag as keyof DocTypeOptions],
   );
 
   const typesToCheck = requestedTypes.length > 0 ? requestedTypes : SPEC_TYPES;
@@ -83,4 +81,31 @@ export function resolveDocuments(params: ResolverParams): string[] {
       }
     })
     .map((type) => type.defaultPath);
+}
+
+export type ConfigSource = "cli" | "local" | "bundled";
+
+export interface ResolvedConfig {
+  path?: string;
+  source: ConfigSource;
+}
+
+export function hasLocalConfig(pattern: RegExp): boolean {
+  try {
+    return fs
+      .readdirSync(process.cwd(), { withFileTypes: true })
+      .some((f) => f.isFile() && pattern.test(f.name));
+  } catch {
+    return false;
+  }
+}
+
+export function resolveConfig(
+  cliConfig: string | undefined,
+  localPattern: RegExp,
+  defaultPath: string,
+): ResolvedConfig {
+  if (cliConfig) return { path: cliConfig, source: "cli" };
+  if (hasLocalConfig(localPattern)) return { path: undefined, source: "local" };
+  return { path: defaultPath, source: "bundled" };
 }

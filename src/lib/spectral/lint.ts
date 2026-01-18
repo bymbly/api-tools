@@ -3,23 +3,21 @@ import {
   CommandUnknownOpts,
   Option,
 } from "@commander-js/extra-typings";
-import { spawnSync } from "node:child_process";
-import fs from "node:fs";
-import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ExecuteParams, runMultiInputCommand } from "../cli/helpers.js";
 import {
   DocTypeOptions,
   isQuiet,
+  resolveConfig,
+  ResolvedConfig,
   resolveDocuments,
   resolveStdio,
-  StdioMode,
 } from "../cli/runtime.js";
+import { run } from "./cli.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const nodeRequire = createRequire(import.meta.url);
 
 // https://github.com/stoplightio/spectral/blob/develop/packages/core/src/ruleset/ruleset.ts#L24
 const SPECTRAL_RULESET_REGEX = /^\.?spectral\.(ya?ml|json|m?js)$/;
@@ -52,12 +50,6 @@ export interface SpectralLintCliOptions extends DocTypeOptions {
   failSeverity: FailSeverity;
   displayOnlyFailures: boolean;
   verbose: boolean;
-}
-
-type RulesetSource = "cli" | "local" | "bundled";
-interface ResolvedRuleset {
-  path?: string;
-  source: RulesetSource;
 }
 
 export const lintCommand = new Command("lint")
@@ -101,34 +93,27 @@ function runSpectralLint(
     options,
     cmd,
     resolveInputs: resolveDocuments,
-    execute: lintSpectral,
+    execute: lint,
   });
 }
 
-export function spectralPassthrough(args: string[], stdio: StdioMode): number {
-  return runSpectral(args, stdio);
-}
+function lint(params: ExecuteParams<SpectralLintCliOptions>): number {
+  const { input, options, globals } = params;
 
-export function lintSpectral(
-  run: ExecuteParams<SpectralLintCliOptions>,
-): number {
-  const { options, globals } = run;
+  const ruleset = resolveConfig(
+    options.ruleset,
+    SPECTRAL_RULESET_REGEX,
+    defaultRulesetPath,
+  );
 
-  const ruleset = resolveRuleset(options.ruleset);
-
-  const spectralArgs = buildArgs({
-    input: run.input,
-    options,
-    ruleset,
-    passthrough: run.passthrough ?? [],
-  });
+  const spectralArgs = buildArgs(params, ruleset);
 
   const stdio = resolveStdio(globals);
   const quiet = isQuiet(globals);
 
   if (!quiet) {
     console.log(`🔍 Spectral lint...`);
-    console.log(`   Input: ${run.input}`);
+    console.log(`   Input: ${input}`);
     console.log(`   Format: ${options.format}`);
     console.log(`   Ruleset: ${ruleset.path ?? "auto"} (${ruleset.source})`);
     if (options.output) {
@@ -141,32 +126,14 @@ export function lintSpectral(
     console.log(`   Verbose: ${String(options.verbose)}`);
   }
 
-  return runSpectral(spectralArgs, stdio);
+  return run(spectralArgs, stdio);
 }
 
-function hasLocalRuleset(): boolean {
-  try {
-    return fs
-      .readdirSync(process.cwd(), { withFileTypes: true })
-      .some((f) => f.isFile() && SPECTRAL_RULESET_REGEX.test(f.name));
-  } catch {
-    return false;
-  }
-}
-
-function resolveRuleset(cliRuleset: string | undefined): ResolvedRuleset {
-  if (cliRuleset) return { path: cliRuleset, source: "cli" };
-  if (hasLocalRuleset()) return { path: undefined, source: "local" };
-  return { path: defaultRulesetPath, source: "bundled" };
-}
-
-function buildArgs(params: {
-  input: string;
-  options: SpectralLintCliOptions;
-  ruleset: ResolvedRuleset;
-  passthrough: readonly string[];
-}): string[] {
-  const { input, options, ruleset, passthrough } = params;
+function buildArgs(
+  params: ExecuteParams<SpectralLintCliOptions>,
+  ruleset: ResolvedConfig,
+): string[] {
+  const { input, options, passthrough } = params;
 
   const args = [
     "lint",
@@ -190,15 +157,4 @@ function buildArgs(params: {
   }
 
   return args;
-}
-
-function runSpectral(args: string[], stdio: StdioMode): number {
-  const spectralBin = nodeRequire.resolve(
-    "@stoplight/spectral-cli/dist/index.js",
-  );
-
-  const res = spawnSync(process.execPath, [spectralBin, ...args], { stdio });
-
-  if (res.error) throw res.error;
-  return res.status ?? 0;
 }

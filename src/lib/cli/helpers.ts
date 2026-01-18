@@ -34,10 +34,10 @@ export interface ExecuteParams<T> {
 
 export type Execute<T> = (params: ExecuteParams<T>) => number;
 
-export type ResolveInputs<T> = (params: {
-  input: string | undefined;
-  options: T;
-}) => string[];
+export type ResolveInputs<T> = (
+  input: string | undefined,
+  options: T,
+) => string[];
 
 export interface SingleInputRun<T> {
   input: string | undefined;
@@ -69,10 +69,7 @@ export function runSingleInputCommand<T>(run: SingleInputRun<T>): void {
 export function runMultiInputCommand<T>(run: MultiInputRun<T>): void {
   const ctx = getRunContext(run);
 
-  const documents = run.resolveInputs({
-    input: ctx.input,
-    options: run.options,
-  });
+  const documents = run.resolveInputs(ctx.input, run.options);
 
   if (documents.length === 0) {
     console.error("❌ No input documents found to process");
