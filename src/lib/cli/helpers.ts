@@ -1,4 +1,7 @@
 import { Command, CommandUnknownOpts } from "@commander-js/extra-typings";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { GlobalOptions } from "./program.js";
 import {
   getGlobals,
@@ -6,6 +9,9 @@ import {
   resolveStdio,
   StdioMode,
 } from "./runtime.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function handleRawPassthrough(
   _option: unknown,
@@ -109,4 +115,38 @@ function processInputs<T>(
   }));
 
   process.exitCode = results.some((r) => r.exitCode !== 0) ? 1 : 0;
+}
+
+export function createInitCommand(configFilename: string): Command {
+  return new Command("init")
+    .description(`Create a ${configFilename} in the current directory`)
+    .option("-f, --force", "Overwrite existing file", false)
+    .action((options: { force: boolean }) => {
+      initConfig(configFilename, options.force);
+    });
+}
+
+function initConfig(configFilename: string, force: boolean): void {
+  const bundledPath = path.join(__dirname, "../../defaults/", configFilename);
+  const targetPath = path.join(process.cwd(), configFilename);
+
+  if (fs.existsSync(targetPath) && !force) {
+    console.error(
+      `
+❌ Error: ${configFilename} already exists
+
+Use --force to overwrite the existing file.
+`.trim(),
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  try {
+    fs.copyFileSync(bundledPath, targetPath);
+    console.log(`✅ Created ${configFilename}`);
+  } catch (error) {
+    console.error(`❌ Failed to create config file:`, error);
+    process.exitCode = 1;
+  }
 }
