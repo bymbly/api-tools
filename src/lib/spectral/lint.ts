@@ -3,26 +3,15 @@ import {
   CommandUnknownOpts,
   Option,
 } from "@commander-js/extra-typings";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { ExecuteParams, runMultiDocumentCommand } from "../cli/helpers.js";
 import {
   DocTypeOptions,
   isQuiet,
-  resolveConfig,
   ResolvedConfig,
   resolveDocuments,
   resolveStdio,
 } from "../cli/runtime.js";
-import { run } from "./cli.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// https://github.com/stoplightio/spectral/blob/develop/packages/core/src/ruleset/ruleset.ts#L24
-const SPECTRAL_RULESET_REGEX = /^\.?spectral\.(ya?ml|json|m?js)$/;
-
-const defaultRulesetPath = path.join(__dirname, "../../defaults/spectral.yaml");
+import { resolveConfig, run } from "./cli.js";
 
 export const VALID_OUTPUT_FORMATS = [
   "json",
@@ -81,9 +70,9 @@ export const lintCommand = new Command("lint")
   .option("--display-only-failures", "Display only failing results", false)
   .option("--verbose", "Enable verbose output", false)
   .allowExcessArguments(true)
-  .action(runSpectralLint);
+  .action(runLint);
 
-function runSpectralLint(
+function runLint(
   input: string | undefined,
   options: Options,
   cmd: CommandUnknownOpts,
@@ -100,13 +89,9 @@ function runSpectralLint(
 export function lint(params: ExecuteParams<Options>): number {
   const { input, options, globals } = params;
 
-  const ruleset = resolveConfig(
-    options.ruleset,
-    SPECTRAL_RULESET_REGEX,
-    defaultRulesetPath,
-  );
+  const ruleset = resolveConfig(options.ruleset);
 
-  const spectralArgs = buildArgs(params, ruleset);
+  const args = buildArgs(params, ruleset);
 
   const stdio = resolveStdio(globals);
   const quiet = isQuiet(globals);
@@ -126,7 +111,7 @@ export function lint(params: ExecuteParams<Options>): number {
     console.log(`   Verbose: ${String(options.verbose)}`);
   }
 
-  return run(spectralArgs, stdio);
+  return run(args, stdio);
 }
 
 function buildArgs(

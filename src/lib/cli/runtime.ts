@@ -1,6 +1,10 @@
 import { CommandUnknownOpts } from "@commander-js/extra-typings";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import { GlobalOptions } from "./program.js";
+
+const nodeRequire = createRequire(import.meta.url);
 
 export type StdioMode = "inherit" | "ignore";
 
@@ -10,6 +14,19 @@ export function resolveStdio(globals: GlobalOptions): StdioMode {
 
 export function isQuiet(globals: GlobalOptions): boolean {
   return globals.quiet === true || globals.silent === true;
+}
+
+export function runCli(
+  binPath: string,
+  args: string[],
+  stdio: StdioMode,
+): number {
+  const bin = nodeRequire.resolve(binPath);
+
+  const res = spawnSync(process.execPath, [bin, ...args], { stdio });
+
+  if (res.error) throw res.error;
+  return res.status ?? 0;
 }
 
 export function parsePassthrough(
@@ -113,7 +130,7 @@ export function hasLocalConfig(pattern: RegExp): boolean {
   }
 }
 
-export function resolveConfig(
+export function resolveConfigRuntime(
   cliConfig: string | undefined,
   localPattern: RegExp,
   defaultPath: string,

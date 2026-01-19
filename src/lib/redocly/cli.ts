@@ -1,14 +1,24 @@
-import { spawnSync } from "node:child_process";
-import { createRequire } from "node:module";
-import { StdioMode } from "../cli/runtime.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  resolveConfigRuntime,
+  ResolvedConfig,
+  runCli,
+  StdioMode,
+} from "../cli/runtime.js";
 
-const nodeRequire = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export const BIN_PATH = "@redocly/cli/bin/cli.js";
+
+const CONFIG_REGEX = /^\.?redocly\.ya?ml$/;
+const DEFAULT_CONFIG_PATH = path.join(__dirname, "../../defaults/redocly.yaml");
+
+export function resolveConfig(cliConfig: string | undefined): ResolvedConfig {
+  return resolveConfigRuntime(cliConfig, CONFIG_REGEX, DEFAULT_CONFIG_PATH);
+}
 
 export function run(args: string[], stdio: StdioMode): number {
-  const redoclyBin = nodeRequire.resolve("@redocly/cli/bin/cli.js");
-
-  const res = spawnSync(process.execPath, [redoclyBin, ...args], { stdio });
-
-  if (res.error) throw res.error;
-  return res.status ?? 0;
+  return runCli(BIN_PATH, args, stdio);
 }

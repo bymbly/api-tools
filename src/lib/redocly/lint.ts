@@ -3,25 +3,15 @@ import {
   CommandUnknownOpts,
   Option,
 } from "@commander-js/extra-typings";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { ExecuteParams, runMultiDocumentCommand } from "../cli/helpers.js";
 import {
   DocTypeOptions,
   isQuiet,
-  resolveConfig,
   ResolvedConfig,
   resolveDocuments,
   resolveStdio,
 } from "../cli/runtime.js";
-import { run } from "./cli.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const REDOCLY_CONFIG_REGEX = /^\.?redocly\.ya?ml$/;
-
-const defaultConfigPath = path.join(__dirname, "../../defaults/redocly.yaml");
+import { resolveConfig, run } from "./cli.js";
 
 export const VALID_OUTPUT_FORMATS = [
   "codeframe",
@@ -62,9 +52,9 @@ export const lintCommand = new Command("lint")
   )
   .option("--config <file>", "Config file path (overrides auto/bundled)")
   .allowExcessArguments(true)
-  .action(runRedoclyLint);
+  .action(runLint);
 
-function runRedoclyLint(
+function runLint(
   input: string | undefined,
   options: Options,
   cmd: CommandUnknownOpts,
@@ -81,11 +71,7 @@ function runRedoclyLint(
 export function lint(params: ExecuteParams<Options>): number {
   const { input, options, globals } = params;
 
-  const config = resolveConfig(
-    options.config,
-    REDOCLY_CONFIG_REGEX,
-    defaultConfigPath,
-  );
+  const config = resolveConfig(options.config);
 
   // prevent using --generate-ignore-file with bundled config
   // since redocly writes the generated ignore file to the config's directory
@@ -110,7 +96,7 @@ Then re-run this command.
     return 1;
   }
 
-  const redoclyArgs = buildArgs(params, config);
+  const args = buildArgs(params, config);
 
   const stdio = resolveStdio(globals);
   const quiet = isQuiet(globals);
@@ -122,7 +108,7 @@ Then re-run this command.
     console.log(`   Config: ${config.path ?? "auto"} (${config.source})`);
   }
 
-  return run(redoclyArgs, stdio);
+  return run(args, stdio);
 }
 
 function buildArgs(
