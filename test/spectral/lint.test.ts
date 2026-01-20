@@ -199,7 +199,7 @@ describe("Spectral Lint Functions", () => {
       lint(run);
 
       expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining("🔍 Spectral lint"),
+        expect.stringContaining("Spectral lint"),
       );
     });
 

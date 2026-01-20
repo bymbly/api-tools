@@ -155,7 +155,7 @@ describe("Redocly Lint Functions", () => {
       lint(run);
 
       expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining("🔍 Redocly lint"),
+        expect.stringContaining("Redocly lint"),
       );
     });
 
