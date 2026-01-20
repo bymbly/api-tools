@@ -1,42 +1,69 @@
-import { execSync } from "child_process";
-import { createPath } from "../utils.js";
+import { Command, CommandUnknownOpts } from "@commander-js/extra-typings";
+import { ExecuteParams, runSingleDocumentCommand } from "../cli/helpers.js";
+import { isQuiet, ResolvedConfig, resolveStdio } from "../cli/runtime.js";
+import { resolveConfig, run } from "./cli.js";
 
-export interface BuildDocsOptions {
-  input: string;
+export interface Options {
   output: string;
-  configPath?: string;
+  config?: string;
 }
 
-export function getOptions(): BuildDocsOptions {
-  return {
-    input: process.env.OPENAPI_INPUT ?? "openapi/openapi.yaml",
-    output: process.env.OPENAPI_OUTPUT ?? "dist/openapi.html",
-    configPath: process.env.OPENAPI_CONFIG,
-  };
+export const buildDocsCommand = new Command("build-docs")
+  .description("Build HTML documentation from OpenAPI documents using Redocly")
+  .argument("[input]", "Document path (default: openapi/openapi.yaml)")
+
+  .option("--output <file>", "Output HTML file path", "dist/docs/openapi.html")
+  .option("--config <file>", "Config file path (overrides auto/bundled)")
+  .allowExcessArguments(true)
+  .action(runBuildDocs);
+
+function runBuildDocs(
+  input: string | undefined,
+  options: Options,
+  cmd: CommandUnknownOpts,
+): void {
+  runSingleDocumentCommand({
+    input,
+    options,
+    cmd,
+    defaultInput: "openapi/openapi.yaml",
+    execute: buildDocs,
+  });
 }
 
-export function buildDocs(): void {
-  const options = getOptions();
+export function buildDocs(params: ExecuteParams<Options>): number {
+  const { input, options, globals } = params;
 
-  console.log(`📚 Building documentation...`);
-  console.log(`   Input: ${options.input}`);
-  console.log(`   Output: ${options.output}`);
-  console.log(`   Config: ${options.configPath ?? "default"}`);
+  const config = resolveConfig(options.config);
+  const args = buildArgs(params, config);
+  const stdio = resolveStdio(globals);
+  const quiet = isQuiet(globals);
 
-  let command = `npx --no @redocly/cli build-docs ${options.input} --output ${options.output}`;
-  if (options.configPath) {
-    command += ` --config ${options.configPath}`;
+  if (!quiet) {
+    console.log(`📚 Redocly build-docs...`);
+    console.log(`   Input: ${input}`);
+    console.log(`   Output: ${options.output}`);
+    console.log(`   Config: ${config.path ?? "auto"} (${config.source})`);
   }
 
-  createPath(options.output);
+  return run(args, stdio);
+}
 
-  try {
-    execSync(command, { stdio: "inherit" });
+function buildArgs(
+  params: ExecuteParams<Options>,
+  config: ResolvedConfig,
+): string[] {
+  const { input, options, passthrough } = params;
 
-    console.log(`✅ Documentation built successfully: ${options.output}`);
-  } catch (error) {
-    console.error(`❌ Building documentation failed!`);
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
+  const args = ["build-docs", input, "--output", options.output];
+
+  // only pass --config if we resolved an explicit path (cli or bundled)
+  if (config.path) args.push("--config", config.path);
+
+  // forward any passthrough args to redocly
+  if (passthrough.length > 0) {
+    args.push(...passthrough);
   }
+
+  return args;
 }
