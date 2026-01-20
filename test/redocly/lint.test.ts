@@ -3,7 +3,12 @@ import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { run } from "../../src/lib/redocly/cli.js";
 import { lint, Options } from "../../src/lib/redocly/lint.js";
-import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
+import {
+  getSpawnCall,
+  mockDirent,
+  okSpawnResult,
+  withDefaults,
+} from "../helper.js";
 
 vi.mock("node:child_process");
 
@@ -94,19 +99,7 @@ describe("Redocly Lint Functions", () => {
     });
 
     it("should not pass config when local config exists", () => {
-      vi.spyOn(fs, "readdirSync").mockReturnValue([
-        {
-          name: Buffer.from("redocly.yaml"),
-          parentPath: "",
-          isFile: () => true,
-          isDirectory: () => false,
-          isBlockDevice: () => false,
-          isCharacterDevice: () => false,
-          isSymbolicLink: () => false,
-          isFIFO: () => false,
-          isSocket: () => false,
-        },
-      ]);
+      vi.spyOn(fs, "readdirSync").mockReturnValue([mockDirent("redocly.yaml")]);
 
       const run = createRun();
 

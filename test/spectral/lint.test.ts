@@ -4,7 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { run } from "../../src/lib/spectral/cli.js";
 import type { Options } from "../../src/lib/spectral/lint.js";
 import { lint } from "../../src/lib/spectral/lint.js";
-import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
+import {
+  getSpawnCall,
+  mockDirent,
+  okSpawnResult,
+  withDefaults,
+} from "../helper.js";
 
 vi.mock("node:child_process");
 
@@ -111,17 +116,7 @@ describe("Spectral Lint Functions", () => {
 
     it("should not pass ruleset when local config exists", () => {
       vi.spyOn(fs, "readdirSync").mockReturnValue([
-        {
-          name: Buffer.from(".spectral.yaml"),
-          parentPath: "",
-          isFile: () => true,
-          isDirectory: () => false,
-          isBlockDevice: () => false,
-          isCharacterDevice: () => false,
-          isSymbolicLink: () => false,
-          isFIFO: () => false,
-          isSocket: () => false,
-        },
+        mockDirent(".spectral.yaml"),
       ]);
 
       const run = createRun();

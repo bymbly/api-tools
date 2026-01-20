@@ -96,3 +96,17 @@ export function withDefaults<T>(defaultInput: string, defaultOptions: T) {
     };
   };
 }
+
+export function mockDirent(filename: string) {
+  return {
+    name: Buffer.from(filename),
+    parentPath: "",
+    isFile: () => true,
+    isDirectory: () => false,
+    isBlockDevice: () => false,
+    isCharacterDevice: () => false,
+    isSymbolicLink: () => false,
+    isFIFO: () => false,
+    isSocket: () => false,
+  };
+}
