@@ -50,6 +50,7 @@ export interface SingleDocumentRun<T> {
   input: string | undefined;
   options: T;
   cmd: CommandUnknownOpts;
+  defaultInput?: string;
   execute: Execute<T>;
 }
 
@@ -62,7 +63,17 @@ export function runSingleDocumentCommand<T>(run: SingleDocumentRun<T>): void {
 
   // fallback to default input if ctx.input is undefined
   // this happens if commander treated first passthrough token as [input]
-  const one = ctx.input ?? run.input;
+  let one = ctx.input ?? run.input;
+
+  if (!one && run.defaultInput) {
+    try {
+      if (fs.existsSync(run.defaultInput)) {
+        one = run.defaultInput;
+      }
+    } catch {
+      // ignore, will fall through to error below
+    }
+  }
 
   if (!one) {
     console.error(
