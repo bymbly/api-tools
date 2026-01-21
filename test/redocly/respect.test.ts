@@ -1,165 +1,271 @@
-import { execSync } from "child_process";
-import fs from "fs";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getOptions, respect } from "../../src/lib/redocly/respect.js";
+import { run } from "../../src/lib/redocly/cli.js";
+import { Options, respect } from "../../src/lib/redocly/respect.js";
+import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
 
-vi.mock("fs");
-vi.mock("child_process");
+vi.mock("node:child_process");
 
-describe("Respect Functions", () => {
-  const originalEnv = process.env;
+const createRun = withDefaults<Options>("arazzo/arazzo.yaml", {
+  verbose: false,
+});
 
+describe("Redocly Respect Functions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env = { ...originalEnv };
+    vi.spyOn(console, "log").mockImplementation(vi.fn());
+    vi.spyOn(console, "error").mockImplementation(vi.fn());
+    vi.spyOn(fs, "readdirSync").mockReturnValue([]);
+    vi.mocked(spawnSync).mockReturnValue(okSpawnResult());
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    vi.restoreAllMocks();
   });
 
-  describe("getOptions", () => {
-    it("should return default options when no env vars are set", () => {
-      const options = getOptions();
+  describe("run", () => {
+    it("should pass args directly to redocly", () => {
+      const exitCode = run(
+        ["respect", "test.arazzo.yaml", "--verbose"],
+        "inherit",
+      );
 
-      expect(options).toEqual({
-        files: "arazzo/*.arazzo.yaml",
-        verbose: false,
-        harOutput: undefined,
-        jsonOutput: undefined,
+      expect(exitCode).toBe(0);
+      const call = getSpawnCall("inherit");
+      expect(call.args).toEqual(
+        expect.arrayContaining(["respect", "test.arazzo.yaml", "--verbose"]),
+      );
+    });
+
+    it("should use ignore stdio when specified", () => {
+      run(["--version"], "ignore");
+      getSpawnCall("ignore");
+    });
+
+    it("should return non-zero exit code on failure", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        status: 2,
       });
-    });
 
-    it("should use ARAZZO_INPUT env var when set", () => {
-      process.env.ARAZZO_INPUT = "custom/path/*.arazzo.yaml";
-
-      const options = getOptions();
-
-      expect(options.files).toBe("custom/path/*.arazzo.yaml");
-    });
-
-    it("should use ARAZZO_VERBOSE env var when set to true", () => {
-      process.env.ARAZZO_VERBOSE = "true";
-
-      const options = getOptions();
-
-      expect(options.verbose).toBe(true);
-    });
-
-    it("should use ARAZZO_HAR_OUTPUT env var when set", () => {
-      process.env.ARAZZO_HAR_OUTPUT = "output.har";
-
-      const options = getOptions();
-
-      expect(options.harOutput).toBe("output.har");
-    });
-
-    it("should use ARAZZO_JSON_OUTPUT env var when set", () => {
-      process.env.ARAZZO_JSON_OUTPUT = "output.json";
-
-      const options = getOptions();
-
-      expect(options.jsonOutput).toBe("output.json");
-    });
-
-    it("should handle all env vars being set", () => {
-      process.env.ARAZZO_INPUT = "custom/path/*.arazzo.yaml";
-      process.env.ARAZZO_VERBOSE = "true";
-      process.env.ARAZZO_HAR_OUTPUT = "output.har";
-      process.env.ARAZZO_JSON_OUTPUT = "output.json";
-
-      const options = getOptions();
-
-      expect(options).toEqual({
-        files: "custom/path/*.arazzo.yaml",
-        verbose: true,
-        harOutput: "output.har",
-        jsonOutput: "output.json",
-      });
+      const exitCode = run(["respect", "bad.arazzo.yaml"], "inherit");
+      expect(exitCode).toBe(2);
     });
   });
 
   describe("respect", () => {
-    beforeEach(() => {
-      vi.mocked(fs.existsSync).mockReturnValue(true);
-      vi.mocked(execSync).mockReturnValue(Buffer.from(""));
+    it("should use provided input", () => {
+      const run = createRun();
+
+      expect(respect(run)).toBe(0);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("arazzo/arazzo.yaml");
     });
 
-    it("should call execSync with correct command", () => {
-      respect();
+    it("should use custom input when provided", () => {
+      const run = createRun({ input: "custom/workflows.arazzo.yaml" });
 
-      expect(execSync).toHaveBeenCalledWith(
-        "npx --no @redocly/cli respect arazzo/*.arazzo.yaml",
-        { stdio: "inherit" },
-      );
+      respect(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("custom/workflows.arazzo.yaml");
     });
 
-    it("should include verbose flag when ARAZZO_VERBOSE is true", () => {
-      process.env.ARAZZO_VERBOSE = "true";
+    it("should pass workflow option when provided", () => {
+      const run = createRun({ options: { workflow: ["login", "checkout"] } });
 
-      respect();
+      respect(run);
 
-      expect(execSync).toHaveBeenCalledWith(
-        "npx --no @redocly/cli respect arazzo/*.arazzo.yaml --verbose",
-        { stdio: "inherit" },
-      );
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--workflow");
+      expect(call.args).toContain("login");
+      expect(call.args).toContain("checkout");
     });
 
-    it("should include har-output when set", () => {
-      process.env.ARAZZO_HAR_OUTPUT = "output.har";
+    it("should pass skip option when provided", () => {
+      const run = createRun({ options: { skip: ["slow-test", "flaky-test"] } });
 
-      respect();
+      respect(run);
 
-      expect(execSync).toHaveBeenCalledWith(
-        "npx --no @redocly/cli respect arazzo/*.arazzo.yaml --har-output output.har",
-        { stdio: "inherit" },
-      );
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--skip");
+      expect(call.args).toContain("slow-test");
+      expect(call.args).toContain("flaky-test");
     });
 
-    it("should include json-output when set", () => {
-      process.env.ARAZZO_JSON_OUTPUT = "output.json";
+    it("should pass verbose flag when true", () => {
+      const run = createRun({ options: { verbose: true } });
 
-      respect();
+      respect(run);
 
-      expect(execSync).toHaveBeenCalledWith(
-        "npx --no @redocly/cli respect arazzo/*.arazzo.yaml --json-output output.json",
-        { stdio: "inherit" },
-      );
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--verbose");
     });
 
-    it("should handle all options together", () => {
-      process.env.ARAZZO_VERBOSE = "true";
-      process.env.ARAZZO_HAR_OUTPUT = "output.har";
-      process.env.ARAZZO_JSON_OUTPUT = "output.json";
+    it("should not pass verbose flag when false", () => {
+      const run = createRun({ options: { verbose: false } });
 
-      respect();
+      respect(run);
 
-      expect(execSync).toHaveBeenCalledWith(
-        "npx --no @redocly/cli respect arazzo/*.arazzo.yaml --verbose --har-output output.har --json-output output.json",
-        { stdio: "inherit" },
-      );
+      const call = getSpawnCall("inherit");
+      expect(call.args).not.toContain("--verbose");
     });
 
-    it("should exit process with code 1 on error", () => {
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
-      const mockError = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => vi.fn());
-
-      vi.mocked(execSync).mockImplementation(() => {
-        throw new Error("Command failed");
+    it("should pass input parameters when provided", () => {
+      const run = createRun({
+        options: { input: ["email=test@example.com", "password=secret"] },
       });
 
-      respect();
+      respect(run);
 
-      expect(mockError).toHaveBeenCalledWith("❌ Arazzo workflows failed!");
-      expect(mockError).toHaveBeenCalledWith("Command failed");
-      expect(mockExit).toHaveBeenCalledWith(1);
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--input");
+      expect(call.args).toContain("email=test@example.com");
+      expect(call.args).toContain("password=secret");
+    });
 
-      mockExit.mockRestore();
-      mockError.mockRestore();
+    it("should pass server overrides when provided", () => {
+      const run = createRun({
+        options: { server: ["api=https://staging.example.com"] },
+      });
+
+      respect(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--server");
+      expect(call.args).toContain("api=https://staging.example.com");
+    });
+
+    it("should pass json-output when provided", () => {
+      const run = createRun({ options: { jsonOutput: "results.json" } });
+
+      respect(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--json-output");
+      expect(call.args).toContain("results.json");
+    });
+
+    it("should pass har-output when provided", () => {
+      const run = createRun({ options: { harOutput: "requests.har" } });
+
+      respect(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--har-output");
+      expect(call.args).toContain("requests.har");
+    });
+
+    it("should use ignore stdio when globals.silent is true", () => {
+      const run = createRun({ globals: { quiet: false, silent: true } });
+
+      respect(run);
+      getSpawnCall("ignore");
+    });
+
+    it("should suppress wrapper logging when quiet", () => {
+      const logSpy = vi.spyOn(console, "log");
+
+      const run = createRun({ globals: { quiet: true, silent: false } });
+
+      respect(run);
+
+      expect(logSpy).not.toHaveBeenCalled();
+    });
+
+    it("should show wrapper logging when not quiet", () => {
+      const logSpy = vi.spyOn(console, "log");
+
+      const run = createRun({ globals: { quiet: false, silent: false } });
+
+      respect(run);
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Redocly respect"),
+      );
+    });
+
+    it("should log workflows when provided", () => {
+      const logSpy = vi.spyOn(console, "log");
+
+      const run = createRun({
+        globals: { quiet: false, silent: false },
+        options: { workflow: ["login", "checkout"] },
+      });
+
+      respect(run);
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Workflows: login, checkout"),
+      );
+    });
+
+    it("should log skipped workflows when provided", () => {
+      const logSpy = vi.spyOn(console, "log");
+
+      const run = createRun({
+        globals: { quiet: false, silent: false },
+        options: { skip: ["slow-test"] },
+      });
+
+      respect(run);
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Skipped Workflows: slow-test"),
+      );
+    });
+
+    it("should log server overrides when provided", () => {
+      const logSpy = vi.spyOn(console, "log");
+
+      const run = createRun({
+        globals: { quiet: false, silent: false },
+        options: { server: ["api=https://staging.example.com"] },
+      });
+
+      respect(run);
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "Server Overrides: api=https://staging.example.com",
+        ),
+      );
+    });
+
+    it("should forward passthrough args to redocly", () => {
+      const run = createRun({
+        passthrough: ["--max-steps", "100"],
+      });
+
+      respect(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--max-steps");
+      expect(call.args).toContain("100");
+    });
+
+    it("should return non-zero exit code on execution failure", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        status: 1,
+      });
+
+      const run = createRun();
+
+      expect(respect(run)).toBe(1);
+    });
+
+    it("should throw when spawnSync errors", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        error: new Error("spawn failed"),
+      });
+
+      const run = createRun();
+
+      expect(() => respect(run)).toThrow("spawn failed");
     });
   });
 });
