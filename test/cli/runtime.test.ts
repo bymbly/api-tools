@@ -1,6 +1,6 @@
 import { Command } from "@commander-js/extra-typings";
 import fs from "fs";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ensureDirectoryExists,
   getGlobals,
@@ -120,7 +120,17 @@ describe("CLI Runtime Utilities", () => {
     });
   });
 
-  describe("createPath", () => {
+  describe("ensureDirectoryExists", () => {
+    vi.mock("fs");
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
     it("should create directory if it does not exist", () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
       vi.mocked(fs.mkdirSync).mockImplementation(() => undefined);
