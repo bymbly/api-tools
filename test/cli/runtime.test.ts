@@ -1,6 +1,8 @@
 import { Command } from "@commander-js/extra-typings";
-import { describe, expect, it } from "vitest";
+import fs from "fs";
+import { describe, expect, it, vi } from "vitest";
 import {
+  ensureDirectoryExists,
   getGlobals,
   isQuiet,
   parsePassthrough,
@@ -115,6 +117,38 @@ describe("CLI Runtime Utilities", () => {
       expect(globals.quiet).toBe(true);
       expect(globals.silent).toBe(false);
       expect(globals.cwd).toBe("/tmp");
+    });
+  });
+
+  describe("createPath", () => {
+    it("should create directory if it does not exist", () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      vi.mocked(fs.mkdirSync).mockImplementation(() => undefined);
+
+      ensureDirectoryExists("some/path/to/file.yaml");
+
+      expect(fs.existsSync).toHaveBeenCalledWith("some/path/to");
+      expect(fs.mkdirSync).toHaveBeenCalledWith("some/path/to", {
+        recursive: true,
+      });
+    });
+
+    it("should not create directory if it already exists", () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+
+      ensureDirectoryExists("some/path/to/file.yaml");
+
+      expect(fs.existsSync).toHaveBeenCalledWith("some/path/to");
+      expect(fs.mkdirSync).not.toHaveBeenCalled();
+    });
+
+    it("should handle nested paths correctly", () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      vi.mocked(fs.mkdirSync).mockImplementation(() => undefined);
+
+      ensureDirectoryExists("a/b/c/d/e/file.yaml");
+
+      expect(fs.existsSync).toHaveBeenCalledWith("a/b/c/d/e");
     });
   });
 });

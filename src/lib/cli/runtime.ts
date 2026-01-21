@@ -2,6 +2,7 @@ import { CommandUnknownOpts } from "@commander-js/extra-typings";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { createRequire } from "node:module";
+import path from "node:path";
 import { GlobalOptions } from "./program.js";
 
 const nodeRequire = createRequire(import.meta.url);
@@ -138,4 +139,11 @@ export function resolveConfigRuntime(
   if (cliConfig) return { path: cliConfig, source: "cli" };
   if (hasLocalConfig(localPattern)) return { path: undefined, source: "local" };
   return { path: defaultPath, source: "bundled" };
+}
+
+export function ensureDirectoryExists(filePath: string): void {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
 }
