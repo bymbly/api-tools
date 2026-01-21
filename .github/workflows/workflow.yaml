@@ -31,7 +31,8 @@ jobs:
 
   publish-npm-package:
     name: Publish NPM Package
-    needs: [prettier-format-check, markdown-lint-check, npm-test]
+    needs:
+      [prettier-format-check, markdown-lint-check, eslint-lint-check, npm-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: write

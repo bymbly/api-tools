@@ -19,7 +19,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bymbly/openapi-tools.git"
+    "url": "git+https://github.com/bymbly/api-tools.git"
   },
   "publishConfig": {
     "@bymbly:registry": "https://npm.pkg.github.com"
