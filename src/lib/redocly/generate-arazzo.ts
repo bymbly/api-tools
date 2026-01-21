@@ -1,37 +1,71 @@
-import { execSync } from "child_process";
-import { createPath } from "../utils";
+import { Command, CommandUnknownOpts } from "@commander-js/extra-typings";
+import { ExecuteParams, runSingleDocumentCommand } from "../cli/helpers.js";
+import {
+  ensureDirectoryExists,
+  isQuiet,
+  resolveStdio,
+} from "../cli/runtime.js";
+import { run } from "./cli.js";
 
-export interface GenerateArazzoOptions {
-  input: string;
+export interface Options {
   output: string;
 }
 
-export function getOptions(): GenerateArazzoOptions {
-  return {
-    input: process.env.OPENAPI_INPUT || "openapi/openapi.yaml",
-    output: process.env.OPENAPI_OUTPUT || "dist/auto-generated.arazzo.yaml",
-  };
+export const generateArazzoCommand = new Command("generate-arazzo")
+  .description(
+    "Generate Arazzo workflow description from an OpenAPI document using Redocly (requires manual editing to be functional)",
+  )
+  .argument("[input]", "OpenAPI document path (default: openapi/openapi.yaml)")
+
+  .option(
+    "--output <file>",
+    "Output file path",
+    "arazzo/auto-generated.arazzo.yaml",
+  )
+  .allowExcessArguments(true)
+  .action(runGenerateArazzo);
+
+function runGenerateArazzo(
+  input: string | undefined,
+  options: Options,
+  cmd: CommandUnknownOpts,
+): void {
+  runSingleDocumentCommand({
+    input,
+    options,
+    cmd,
+    defaultInput: "openapi/openapi.yaml",
+    execute: generateArazzo,
+  });
 }
 
-export function generateArazzo(): void {
-  const options = getOptions();
+export function generateArazzo(params: ExecuteParams<Options>): number {
+  const { input, options, globals } = params;
 
-  console.log(`🔄 Generating Arazzo workflows...`);
-  console.log(`   Input: ${options.input}`);
-  console.log(`   Output: ${options.output}`);
+  ensureDirectoryExists(options.output);
 
-  createPath(options.output);
+  const args = buildArgs(params);
+  const stdio = resolveStdio(globals);
+  const quiet = isQuiet(globals);
 
-  let command = `npx --no @redocly/cli generate-arazzo ${options.input} --output-file ${options.output}`;
-
-  try {
-    execSync(command, { stdio: "inherit" });
-    console.log(
-      `✅ Arazzo workflows generated successfully: ${options.output}`,
-    );
-  } catch (error) {
-    console.error(`❌ Arazzo generation failed!`);
-    console.error(`${error instanceof Error ? error.message : String(error)}`);
-    process.exit(1);
+  if (!quiet) {
+    console.log(`🔄 Redocly generate-arazzo...`);
+    console.log(`   Input: ${input}`);
+    console.log(`   Output: ${options.output}`);
   }
+
+  return run(args, stdio);
+}
+
+function buildArgs(params: ExecuteParams<Options>): string[] {
+  const { input, options, passthrough } = params;
+
+  const args = ["generate-arazzo", input, "--output-file", options.output];
+
+  // forward any passthrough args to redocly
+  if (passthrough.length > 0) {
+    args.push(...passthrough);
+  }
+
+  return args;
 }

@@ -1,8 +1,9 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { run } from "../../src/lib/redocly/cli.js";
-import { lint, Options } from "../../src/lib/redocly/lint.js";
+import { run } from "../../src/lib/spectral/cli.js";
+import type { Options } from "../../src/lib/spectral/lint.js";
+import { lint } from "../../src/lib/spectral/lint.js";
 import {
   getSpawnCall,
   mockDirent,
@@ -13,10 +14,13 @@ import {
 vi.mock("node:child_process");
 
 const createRun = withDefaults<Options>("openapi/openapi.yaml", {
-  format: "codeframe",
+  format: "stylish",
+  failSeverity: "warn",
+  displayOnlyFailures: false,
+  verbose: false,
 });
 
-describe("Redocly Lint Functions", () => {
+describe("Spectral Lint Functions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "log").mockImplementation(vi.fn());
@@ -30,7 +34,7 @@ describe("Redocly Lint Functions", () => {
   });
 
   describe("run", () => {
-    it("should pass args directly to redocly", () => {
+    it("should pass args directly to spectral", () => {
       const exitCode = run(
         ["lint", "spec.yaml", "--format", "json"],
         "inherit",
@@ -78,7 +82,7 @@ describe("Redocly Lint Functions", () => {
       expect(call.args).toContain("custom/spec.yaml");
     });
 
-    it("should pass format option to redocly", () => {
+    it("should pass format option to spectral", () => {
       const run = createRun({ options: { format: "json" } });
 
       lint(run);
@@ -88,46 +92,86 @@ describe("Redocly Lint Functions", () => {
       expect(call.args).toContain("json");
     });
 
-    it("should use CLI-provided config when specified", () => {
-      const run = createRun({ options: { config: "custom/redocly.yaml" } });
-
-      lint(run);
-
-      const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--config");
-      expect(call.args).toContain("custom/redocly.yaml");
-    });
-
-    it("should not pass config when local config exists", () => {
-      vi.spyOn(fs, "readdirSync").mockReturnValue([mockDirent("redocly.yaml")]);
-
-      const run = createRun();
-
-      lint(run);
-
-      const call = getSpawnCall("inherit");
-      expect(call.args).not.toContain("--config");
-    });
-
-    it("should use bundled config when no local config", () => {
-      const run = createRun();
-
-      lint(run);
-
-      const call = getSpawnCall("inherit");
-      const configIndex = call.args.indexOf("--config");
-      expect(call.args[configIndex + 1]).toContain("defaults/redocly.yaml");
-    });
-
-    it("should block --generate-ignore-file with bundled config", () => {
+    it("should pass output option when specified", () => {
       const run = createRun({
-        passthrough: ["--generate-ignore-file"],
+        options: { format: "json", output: "results.json" },
       });
 
-      expect(lint(run)).toBe(1);
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining("Cannot use --generate-ignore-file"),
-      );
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--output");
+      expect(call.args).toContain("results.json");
+    });
+
+    it("should use CLI-provided ruleset when specified", () => {
+      const run = createRun({ options: { ruleset: "custom/spectral.yaml" } });
+
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--ruleset");
+      expect(call.args).toContain("custom/spectral.yaml");
+    });
+
+    it("should not pass ruleset when local config exists", () => {
+      vi.spyOn(fs, "readdirSync").mockReturnValue([
+        mockDirent(".spectral.yaml"),
+      ]);
+
+      const run = createRun();
+
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).not.toContain("--ruleset");
+    });
+
+    it("should use bundled ruleset when no local config", () => {
+      const run = createRun();
+
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      const rulesetIndex = call.args.indexOf("--ruleset");
+      expect(call.args[rulesetIndex + 1]).toContain("defaults/spectral.yaml");
+    });
+
+    it("should pass fail-severity option", () => {
+      const run = createRun({ options: { failSeverity: "error" } });
+
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--fail-severity");
+      expect(call.args).toContain("error");
+    });
+
+    it("should pass display-only-failures flag when true", () => {
+      const run = createRun({ options: { displayOnlyFailures: true } });
+
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--display-only-failures");
+    });
+
+    it("should not pass display-only-failures flag when false", () => {
+      const run = createRun({ options: { displayOnlyFailures: false } });
+
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).not.toContain("--display-only-failures");
+    });
+
+    it("should pass verbose flag when true", () => {
+      const run = createRun({ options: { verbose: true } });
+
+      lint(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--verbose");
     });
 
     it("should use ignore stdio when globals.silent is true", () => {
@@ -155,11 +199,11 @@ describe("Redocly Lint Functions", () => {
       lint(run);
 
       expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Redocly lint"),
+        expect.stringContaining("Spectral lint"),
       );
     });
 
-    it("should forward passthrough args to redocly", () => {
+    it("should forward passthrough args to spectral", () => {
       const run = createRun({
         passthrough: ["--ignore-unknown-format"],
       });

@@ -1,7 +1,18 @@
-# OpenAPI Tools
+# @bymbly/api-tools
 
-Standardized CLI tooling for OpenAPI specifications.
-Provides consistent conventions and environment-based configuration.
+Unified, opinionated CLI wrapper for API specification tooling (Spectral, Redocly).
+
+Standardizes common workflows across projects with sensible defaults while allowing full
+customization through CLI options and passthrough arguments.
+
+## Features
+
+- **Single unified CLI** - One tool for all API spec operations
+- **Opinionated defaults** - Sensible conventions for file locations and configurations
+- **Consistent interface** - Same flags and patterns across all commands
+- **Flexible overrides** - CLI options for common cases, passthrough for advanced use
+- **Bundled configs** - Default Spectral and Redocly configuration included
+- **Auto-detection** - Finds OpenAPI, AsyncAPI, and Arazzo specs automatically
 
 ## Installation
 
@@ -21,29 +32,28 @@ Provides consistent conventions and environment-based configuration.
    export GITHUB_PACKAGES_TOKEN=your_ghp_token_here
    ```
 
-   This replaces normal `npm login` credentials, and allows access to GitHub's package registry.
-
    [Github Packages Authentication Docs](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-to-github-packages)
 
 1. Then install the package:
 
    ```bash
-   npm install -D @bymbly/openapi-tools@latest
+   npm install -D @bymbly/api-tools@latest
    ```
 
 ## Quick Start
 
-Add to your `package.json`:
+Add scripts to your `package.json`:
 
 ```json
 {
   "scripts": {
-    "bundle": "redocly-bundle",
-    "lint": "redocly-lint",
-    "docs": "redocly-build-docs",
-    "arazzo": "redocly-generate-arazzo",
-    "respect": "redocly-respect",
-    "validate": "npm run lint && npm run bundle && npm run docs"
+    "lint": "npm run lint:spectral && npm run lint:redocly",
+    "lint:spectral": "api-tools spectral lint",
+    "lint:redocly": "api-tools redocly lint",
+    "bundle": "api-tools redocly bundle",
+    "docs": "api-tools redocly build-docs",
+    "arazzo:gen": "api-tools redocly generate-arazzo",
+    "test:api": "api-tools redocly respect"
   }
 }
 ```
@@ -51,207 +61,451 @@ Add to your `package.json`:
 Run:
 
 ```bash
-npm run bundle # Bundles openapi/openapi.yaml -> dist/openapi.yaml
-npm run lint # Lints openapi/openapi.yaml
-npm run docs # Generates dist/openapi.html
-npm run arazzo # Generates dist/auto-generated.arazzo.yaml
-npm run respect # Tests arazzo/*.arazzo.yaml workflows
+npm run lint        # Lint with both Spectral and Redocly
+npm run bundle      # Bundle OpenAPI spec
+npm run docs        # Generate HTML documentation
+npm run arazzo:gen  # Generate Arazzo workflow starter
+npm run test:api    # Execute Arazzo workflow tests
 ```
 
-## Available Commands
+## Command Structure
+
+```bash
+api-tools [global-options] <command> <subcommand> [options] [-- passthrough-args]
+```
+
+### Global Options
+
+Available for all commands:
+
+- `--quiet` - Disable wrapper logging (still shows tool output)
+- `--silent` - Disable all output (wrapper + tool)
+- `--cwd <path>` - Run as if started in this directory
+
+## Commands
+
+### Spectral Commands
+
+#### `spectral lint`
+
+Validate and lint OpenAPI, AsyncAPI, and Arazzo documents.
+
+**Usage:**
+
+```bash
+api-tools spectral lint [input] [options]
+```
+
+**Options:**
+
+- `[input]` - Document path (default: auto-detect)
+- `--openapi` - Lint only OpenAPI at `openapi/openapi.yaml`
+- `--asyncapi` - Lint only AsyncAPI at `asyncapi/asyncapi.yaml`
+- `--arazzo` - Lint only Arazzo at `arazzo/arazzo.yaml`
+- `--format <format>` - Output format (default: `stylish`)
+  - Choices: `json`, `stylish`, `junit`, `html`, `text`, `teamcity`, `pretty`, `github-actions`, `sarif`, `markdown`, `gitlab`
+- `--output <file>` - Write output to file
+- `--ruleset <file>` - Custom ruleset (overrides auto/bundled)
+- `--fail-severity <level>` - Fail threshold (default: `warn`)
+  - Choices: `error`, `warn`, `info`, `hint`
+- `--display-only-failures` - Show only failing results
+- `--verbose` - Enable verbose output
+
+**Examples:**
+
+```bash
+# Auto-detect and lint all specs
+api-tools spectral lint
+
+# Lint specific spec types
+api-tools spectral lint --openapi
+api-tools spectral lint --asyncapi --arazzo
+
+# Lint specific file
+api-tools spectral lint custom/spec.yaml
+
+# JSON output
+api-tools spectral lint --format json --output results.json
+
+# Custom ruleset
+api-tools spectral lint --ruleset .spectral.yaml
+
+# Passthrough advanced options
+api-tools spectral lint -- --ignore-unknown-format
+```
+
+#### `spectral init`
+
+Create a default `spectral.yaml` config file.
+
+```bash
+api-tools spectral init [--force]
+```
 
 ### Redocly Commands
 
-<!-- markdownlint-disable MD013 -->
+#### `redocly lint`
 
-| Command                   | Description                              | Default Input          | Default Output                    |
-| ------------------------- | ---------------------------------------- | ---------------------- | --------------------------------- |
-| `redocly-bundle`          | Bundle OpenAPI specs with $refs resolved | `openapi/openapi.yaml` | `dist/openapi.yaml`               |
-| `redocly-lint`            | Lint OpenAPI specs                       | `openapi/openapi.yaml` | terminal output                   |
-| `redocly-build-docs`      | Generate HTML documentation              | `openapi/openapi.yaml` | `dist/openapi.html`               |
-| `redocly-generate-arazzo` | Generate Arazzo workflow descriptions    | `openapi/openapi.yaml` | `dist/auto-generated.arazzo.yaml` |
-| `redocly-respect`         | Test Arazzo workflows                    | `arazzo/*.arazzo.yaml` | terminal output                   |
+Validate and lint OpenAPI, AsyncAPI, and Arazzo documents using Redocly.
 
-<!-- markdownlint-enable MD013 -->
-
-## Configuration
-
-All commands use environment variables with sensible defaults:
-
-### `OPENAPI_INPUT`
-
-Path to your OpenAPI specification file.
-
-**Default:** `openapi/openapi.yaml`
-
-**Example:**
+**Usage:**
 
 ```bash
-OPENAPI_INPUT=api/spec.yaml redocly-bundle
+api-tools redocly lint [input] [options]
 ```
 
-### `OPENAPI_OUTPUT`
+**Options:**
 
-Where to write output files.
+- `[input]` - Document path (default: auto-detect)
+- `--openapi` - Lint only OpenAPI at `openapi/openapi.yaml`
+- `--asyncapi` - Lint only AsyncAPI at `asyncapi/asyncapi.yaml`
+- `--arazzo` - Lint only Arazzo at `arazzo/arazzo.yaml`
+- `--format <format>` - Output format (default: `codeframe`)
+  - Choices: `codeframe`, `stylish`, `json`, `checkstyle`, `codeclimate`, `github-actions`, `markdown`, `summary`
+- `--config <file>` - Config file path (overrides auto/bundled)
 
-**Defaults:**
-
-- `redocly-bundle`: `dist/openapi.yaml` (extension added based on format)
-- `redocly-build-docs`: `./dist/openapi.html`
-- `redocly-generate-arazzo`: `dist/auto-generated.arazzo.yaml`
-
-**Example:**
+**Examples:**
 
 ```bash
-OPENAPI_OUTPUT=public/api.html redocly-build-docs
+# Auto-detect and lint all specs
+api-tools redocly lint
+
+# Lint only OpenAPI
+api-tools redocly lint --openapi
+
+# JSON output
+api-tools redocly lint --format json
+
+# Custom config
+api-tools redocly lint --config custom-redocly.yaml
 ```
 
-### `OPENAPI_FORMAT`
+#### `redocly build-docs`
 
-Output or report format.
+Build HTML documentation from OpenAPI documents.
 
-**Defaults:**
-
-- `redocly-bundle`: `yaml` (options `yaml`, `json`)
-- `redocly-lint`: `codeframe` (options: `codeframe`, `stylish`, `json`,
-  `checkstyle`, `codeclimate`, `github-actions`, `markdown`, `summary`)
-
-**Example:**
+**Usage:**
 
 ```bash
-OPENAPI_FORMAT=json redocly-bundle
-OPENAPI_FORMAT=github-actions redocly-lint
+api-tools redocly build-docs [input] [options]
 ```
 
-### `OPENAPI_CONFIG`
+**Options:**
 
-Path to Redocly configuration file.
+- `[input]` - OpenAPI document path (default: `openapi/openapi.yaml`)
+- `--output <file>` - Output HTML file (default: `dist/docs/openapi.html`)
+- `--config <file>` - Config file path (overrides auto/bundled)
 
-**Default:** Auto-discovered (`redocly.yaml` in project root) or Redocly defaults
-
-**Example:**
+**Examples:**
 
 ```bash
-OPENAPI_CONFIG=.config/redocly.yaml redocly-lint
+# Generate docs with defaults
+api-tools redocly build-docs
+
+# Custom output location
+api-tools redocly build-docs --output public/api-docs.html
+
+# Custom title via passthrough
+api-tools redocly build-docs -- --title "My API Documentation"
 ```
 
-### `ARAZZO_INPUT`
+#### `redocly bundle`
 
-Path to your Arazzo workflow(s). Supports glob patterns.
+Bundle API descriptions into a single file.
 
-**Default:** `arazzo/*.arazzo.yaml`
-
-**Example:**
+**Usage:**
 
 ```bash
-ARAZZO_INPUT=api/arazzo.yaml redocly-respect
+api-tools redocly bundle [input] [options]
 ```
 
-### `ARAZZO_VERBOSE`
+**Options:**
 
-Set to `true` for verbose output.
+- `[input]` - Document path (default: `openapi/openapi.yaml`)
+- `--output <path>` - Output file path (default: `dist/bundle/openapi.yaml`)
+- `--ext <extension>` - Output extension (overrides `--output` extension)
+  - Choices: `json`, `yaml`, `yml`
+- `--dereferenced` - Generate fully dereferenced bundle (no `$ref`)
+- `--config <file>` - Config file path (overrides auto/bundled)
 
-**Default:** `false`
-
-**Example:**
+**Examples:**
 
 ```bash
-ARAZZO_VERBOSE=true redocly-respect
+# Bundle with defaults
+api-tools redocly bundle
+
+# Bundle to JSON
+api-tools redocly bundle --ext json
+
+# Fully dereferenced bundle
+api-tools redocly bundle --dereferenced
+
+# Custom output
+api-tools redocly bundle --output dist/api-bundle.yaml
+
+# Remove unused components via passthrough
+api-tools redocly bundle -- --remove-unused-components
 ```
 
-### `ARAZZO_HAR_OUTPUT`
+#### `redocly generate-arazzo`
 
-HAR file output path (for debugging HTTP traffic).
+Generate Arazzo workflow description from OpenAPI document.
 
-**Default:** none
-
-**Example:**
+**Usage:**
 
 ```bash
-ARAZZO_HAR_OUTPUT=logs/arazzo.har redocly-respect
+api-tools redocly generate-arazzo [input] [options]
 ```
 
-### `ARAZZO_JSON_OUTPUT`
+**Options:**
 
-JSON file output path (for debugging).
+- `[input]` - OpenAPI document path (default: `openapi/openapi.yaml`)
+- `--output <file>` - Output file path (default: `arazzo/auto-generated.arazzo.yaml`)
 
-**Default:** none
+**Note:** Generated Arazzo files require manual editing to be functional.
 
-**Example:**
+**Examples:**
 
 ```bash
-ARAZZO_JSON_OUTPUT=logs/arazzo.json redocly-respect
+# Generate from default OpenAPI
+api-tools redocly generate-arazzo
+
+# Custom output
+api-tools redocly generate-arazzo --output arazzo/workflows.arazzo.yaml
 ```
 
-## Redocly's Native Environment Variables
+#### `redocly respect`
 
-Some Redocly command support native environment variables for advanced configuration:
+Execute Arazzo workflow tests.
 
-### `REDOCLY_CLI_RESPECT_INPUT`
-
-Input parameters as JSON or key=value pairs.
-
-**Example:**
+**Usage:**
 
 ```bash
-REDOCLY_CLI_RESPECT_INPUT='userEmail=name@redocly.com,userPassword=12345' redocly-respect
-REDOCLY_CLI_RESPECT_INPUT='{"key":"value","nested":{"nestedKey":"nestedValue"}}' redocly-respect
+api-tools redocly respect [input] [options]
 ```
 
-[Redocly `respect` Documentation](https://redocly.com/docs/cli/commands/respect)
+**Options:**
 
-### `REDOCLY_CLI_RESPECT_SERVER`
+- `[input]` - Arazzo document path (default: `arazzo/arazzo.yaml`)
+- `--workflow <names...>` - Run only specified workflows
+- `--skip <names...>` - Skip specified workflows (conflicts with `--workflow`)
+- `--verbose` - Enable verbose output
+- `--input <params...>` - Workflow input parameters (`key=value` or JSON)
+- `--server <overrides...>` - Server overrides (`name=url`)
+- `--json-output <file>` - Save results to JSON file
+- `--har-output <file>` - Save HTTP interactions to HAR file
 
-Server overrides.
-
-**Example:**
+**Examples:**
 
 ```bash
-REDOCLY_CLI_RESPECT_SERVER="sourceDescriptionName1=https://example.com" redocly-respect
+# Execute default workflows
+api-tools redocly respect
+
+# Run specific workflow
+api-tools redocly respect --workflow login-flow
+
+# Test against staging
+api-tools redocly respect --server api=https://staging.example.com
+
+# Provide inputs
+api-tools redocly respect --input email=test@example.com --input password=secret
+
+# CI/CD with JSON output
+api-tools redocly respect --json-output results.json --verbose
+
+# Advanced options via passthrough
+api-tools redocly respect -- --max-steps 100 --severity '{"STATUS_CODE_CHECK":"warn"}'
 ```
 
-[Redocly `respect` Documentation](https://redocly.com/docs/cli/commands/respect)
+#### `redocly init`
 
-### `REDOCLY_CLI_RESPECT_MAX_STEPS`
-
-Maximum number of steps to run.
-
-**Example:**
+Create a default `redocly.yaml` config file.
 
 ```bash
-REDOCLY_CLI_RESPECT_MAX_STEPS=50 redocly-respect
+api-tools redocly init [--force]
 ```
 
-[Redocly `respect` Documentation](https://redocly.com/docs/cli/commands/respect)
+## Default File Locations
 
-### `REDOCLY_CLI_RESPECT_MAX_FETCH_TIMEOUT`
-
-Maximum time to wait for API response per request in milliseconds.
-
-**Example:**
+The tool expects the following directory structure:
 
 ```bash
-REDOCLY_CLI_RESPECT_MAX_FETCH_TIMEOUT=60000 redocly-respect
+project/
+├── openapi/
+│   └── openapi.yaml        # Main OpenAPI spec
+├── asyncapi/
+│   └── asyncapi.yaml       # Main AsyncAPI spec
+├── arazzo/
+│   ├── arazzo.yaml         # Production Arazzo workflows
+│   └── auto-generated.arazzo.yaml  # Generated starter
+└── dist/
+    ├── bundle/
+    │   └── openapi.yaml    # Bundled output
+    └── docs/
+        └── openapi.html    # Generated docs
 ```
 
-[Redocly `respect` Documentation](https://redocly.com/docs/cli/commands/respect)
+## Configuration Files
 
-### `REDOCLY_CLI_RESPECT_EXECUTION_TIMEOUT`
+### Auto-Discovery
 
-Maximum time to wait for `respect` command execution in milliseconds.
+The tool automatically discovers local config files:
 
-**Example:**
+- `.spectral.yaml`, `.spectral.yml`, `.spectral.json`, `.spectral.js`, `.spectral.mjs`,
+  `spectral.yaml`, `spectral.yml`, `spectral.json`, `spectral.js`, `spectral.mjs`
+- `.redocly.yaml`, `.redocly.yml`, `redocly.yaml`, `redocly.yml`
+
+### Bundled Defaults
+
+If no local config exists, opinionated bundled configs are used with stricter-than-default rules:
+
+- **Spectral**: `defaults/spectral.yaml` - Comprehensive OpenAPI/AsyncAPI/Arazzo validation
+- **Redocly**: `defaults/redocly.yaml` - Strict API design standards
+
+These bundled configs enforce best practices and may be more restrictive than upstream tool defaults.
+Create a local config file to customize rules for your project.
+
+### Custom Configs
+
+Override with CLI options:
 
 ```bash
-REDOCLY_CLI_RESPECT_EXECUTION_TIMEOUT=1800000 redocly-respect
+api-tools spectral lint --ruleset custom/.spectral.yaml
+api-tools redocly lint --config custom/redocly.yaml
 ```
 
-[Redocly `respect` Documentation](https://redocly.com/docs/cli/commands/respect)
+## Passthrough Arguments
+
+For advanced options not exposed by the wrapper, use `--` to pass arguments directly to the underlying tool:
+
+```bash
+# Spectral advanced options
+api-tools spectral lint -- --ignore-unknown-format
+
+# Redocly advanced options
+api-tools redocly bundle -- --remove-unused-components
+api-tools redocly respect -- --max-steps 100 --execution-timeout 1800000
+```
+
+## CI/CD Integration
+
+### GitHub Actions Example
+
+```yaml
+name: API Validation
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_PACKAGES_TOKEN }}
+
+      - name: Lint with Spectral
+        run: npm run lint:spectral -- --format github-actions
+
+      - name: Lint with Redocly
+        run: npm run lint:redocly -- --format github-actions
+
+      - name: Bundle spec
+        run: npm run bundle
+
+      - name: Generate docs
+        run: npm run docs
+
+      - name: Test workflows
+        run: npm run test:api -- --verbose
+
+      # Alternative: Call CLI directly (useful for matrix builds or custom workflows)
+      # - name: Lint OpenAPI with Spectral
+      #   run: npx api-tools spectral lint --openapi --format github-actions
+
+      # Optional: Save results as artifacts
+      - name: Generate test report
+        if: always()
+        run: npm run test:api -- --json-output results.json
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: api-test-results
+          path: results.json
+```
+
+## Common Workflows
+
+### Development
+
+```bash
+# Lint during development
+api-tools spectral lint --openapi
+
+# Generate docs for local preview
+api-tools redocly build-docs
+```
+
+### Pre-commit
+
+```bash
+# Fast validation
+api-tools spectral lint --fail-severity error
+api-tools redocly lint
+```
+
+### CI Pipeline
+
+```bash
+# Full validation with outputs
+api-tools spectral lint --format json --output spectral-results.json
+api-tools redocly lint --format github-actions
+api-tools redocly bundle --output dist/openapi.yaml
+api-tools redocly build-docs --output dist/api-docs.html
+```
+
+### API Testing
+
+```bash
+# Run Arazzo workflows against staging
+api-tools redocly respect \
+  --server api=https://staging.example.com \
+  --input apiKey=${STAGING_API_KEY} \
+  --json-output test-results.json \
+  --verbose
+```
+
+## Troubleshooting
+
+### Command not found
+
+Ensure the package is installed and npm scripts are configured:
+
+```bash
+npm install -D @bymbly/api-tools@latest
+```
+
+### Config not found
+
+Check config file names and locations. Use `--config` or `--ruleset` to specify custom paths.
+
+### Bundled config issues
+
+To use your own config instead of bundled defaults, create a local config file that will be auto-discovered.
 
 ## Contributing
 
-Issues and pull requests welcome!
+Issues and pull requests welcome at [github.com/bymbly/api-tools](https://github.com/bymbly/api-tools)!
 
 ## License
 
-[Apache License, Version 2.0](https://github.com/bymbly/openapi-tools/blob/main/LICENSE)
+[Apache License, Version 2.0](LICENSE)

@@ -1,61 +1,265 @@
-import fs from "fs";
-import path from "path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { respect } from "../../src/lib/redocly/respect";
+import fs from "node:fs";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { runCli } from "../helper.js";
 
 /**
  * Integration tests for Redocly Arazzo Respect command require a live API server.
  * These tests cover scenarios where Arazzo workflows are expected to fail.
  */
 
-describe("Respect Integration Tests", () => {
-  const originalEnv = process.env;
+describe("Redocly Respect Integration Tests", () => {
   const originalCwd = process.cwd();
   let tempDir: string;
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(process.cwd(), "test-temp-"));
     process.chdir(tempDir);
-    process.env = { ...originalEnv };
   });
 
   afterEach(() => {
     process.chdir(originalCwd);
-    process.env = originalEnv;
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  describe("invalid workflows", () => {
-    it("should fail for nonexistent file", () => {
-      process.env.ARAZZO_INPUT = "arazzo/nonexistent.arazzo.yaml";
-
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
-
-      respect();
-
-      expect(mockExit).toHaveBeenCalledWith(1);
-      mockExit.mockRestore();
-    });
-
-    it("should fail for invalid workflow file", () => {
+  describe("Arazzo documents", () => {
+    it("should execute valid Arazzo workflow", async () => {
       fs.cpSync(
-        path.join(originalCwd, "test/fixtures/arazzo/invalid"),
+        path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
         path.join(tempDir, "arazzo"),
-        {
-          recursive: true,
-        },
+        { recursive: true },
       );
 
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--silent",
+      ]);
 
-      respect();
+      // will fail because no actual API to test against, but command should run
+      expect(result.exitCode).not.toBe(127); // command not found
+    });
 
-      expect(mockExit).toHaveBeenCalledWith(1);
-      mockExit.mockRestore();
+    it("should fail for invalid Arazzo spec", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/arazzo/invalid/broken-spec"),
+        path.join(tempDir, "arazzo"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).not.toBe(0);
+      expect(result.exitCode).not.toBe(127);
+    });
+  });
+
+  describe("default input handling", () => {
+    it("should use default input path when no argument provided", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
+        path.join(tempDir, "arazzo"),
+        { recursive: true },
+      );
+
+      const result = await runCli(["redocly", "respect", "--silent"]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+
+    it("should fail when no input provided and default doesn't exist", async () => {
+      const result = await runCli(["redocly", "respect", "--silent"]);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("no input document specified");
+    });
+  });
+
+  describe("command options", () => {
+    beforeEach(() => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
+        path.join(tempDir, "arazzo"),
+        { recursive: true },
+      );
+    });
+
+    it("should work with custom input path", async () => {
+      fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
+      fs.copyFileSync(
+        path.join(
+          originalCwd,
+          "test/fixtures/arazzo/valid/simple-spec/arazzo.yaml",
+        ),
+        path.join(tempDir, "custom/workflows.arazzo.yaml"),
+      );
+
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "custom/workflows.arazzo.yaml",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+
+    it("should accept workflow option", async () => {
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--workflow",
+        "test-flow",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+
+    it("should accept skip option", async () => {
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--skip",
+        "slow-flow",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+
+    it("should accept verbose flag", async () => {
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--verbose",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+
+    it("should accept input parameters", async () => {
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--input",
+        "email=test@example.com",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+
+    it("should accept server overrides", async () => {
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--server",
+        "api=https://test.example.com",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+
+    it("should accept json-output option", async () => {
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--json-output",
+        "results.json",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+
+    it("should accept har-output option", async () => {
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--har-output",
+        "requests.har",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+
+    it("should work with passthrough args", async () => {
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--silent",
+        "--",
+        "--max-steps",
+        "100",
+      ]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+
+    it("should respect --cwd flag", async () => {
+      const subDir = path.join(tempDir, "subdir");
+      fs.mkdirSync(subDir, { recursive: true });
+
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
+        path.join(subDir, "arazzo"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "--cwd",
+        subDir,
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).not.toBe(127);
+    });
+  });
+
+  describe("conflict handling", () => {
+    beforeEach(() => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
+        path.join(tempDir, "arazzo"),
+        { recursive: true },
+      );
+    });
+
+    it("should reject workflow and skip used together", async () => {
+      const result = await runCli([
+        "redocly",
+        "respect",
+        "arazzo/arazzo.yaml",
+        "--workflow",
+        "test1",
+        "--skip",
+        "test2",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("cannot be used with");
     });
   });
 });

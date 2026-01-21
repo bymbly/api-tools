@@ -1,121 +1,173 @@
-import { execSync } from "child_process";
-import fs from "fs";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { run } from "../../src/lib/redocly/cli.js";
 import {
   generateArazzo,
-  getOptions,
+  Options,
 } from "../../src/lib/redocly/generate-arazzo.js";
+import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
 
-vi.mock("fs");
-vi.mock("child_process");
+vi.mock("node:child_process");
 
-describe("Generate Arazzo Functions", () => {
-  const originalEnv = process.env;
+const createRun = withDefaults<Options>("openapi/openapi.yaml", {
+  output: "arazzo/auto-generated.arazzo.yaml",
+});
 
+describe("Redocly Generate-Arazzo Functions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env = { ...originalEnv };
+    vi.spyOn(console, "log").mockImplementation(vi.fn());
+    vi.spyOn(console, "error").mockImplementation(vi.fn());
+    vi.spyOn(fs, "readdirSync").mockReturnValue([]);
+    vi.mocked(spawnSync).mockReturnValue(okSpawnResult());
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    vi.restoreAllMocks();
   });
 
-  describe("getOptions", () => {
-    it("should return default options when no env vars are set", () => {
-      const options = getOptions();
+  describe("run", () => {
+    it("should pass args directly to redocly", () => {
+      const exitCode = run(
+        [
+          "generate-arazzo",
+          "spec.yaml",
+          "--output-file",
+          "workflows.arazzo.yaml",
+        ],
+        "inherit",
+      );
 
-      expect(options).toEqual({
-        input: "openapi/openapi.yaml",
-        output: "dist/auto-generated.arazzo.yaml",
+      expect(exitCode).toBe(0);
+      const call = getSpawnCall("inherit");
+      expect(call.args).toEqual(
+        expect.arrayContaining([
+          "generate-arazzo",
+          "spec.yaml",
+          "--output-file",
+          "workflows.arazzo.yaml",
+        ]),
+      );
+    });
+
+    it("should use ignore stdio when specified", () => {
+      run(["--version"], "ignore");
+      getSpawnCall("ignore");
+    });
+
+    it("should return non-zero exit code on failure", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        status: 2,
       });
-    });
 
-    it("should use OPENAPI_INPUT env var when set", () => {
-      process.env.OPENAPI_INPUT = "custom/path/spec.yaml";
-
-      const options = getOptions();
-
-      expect(options.input).toBe("custom/path/spec.yaml");
-    });
-
-    it("should use OPENAPI_OUTPUT env var when set", () => {
-      process.env.OPENAPI_OUTPUT = "custom/dist/custom.arazzo.yaml";
-
-      const options = getOptions();
-
-      expect(options.output).toBe("custom/dist/custom.arazzo.yaml");
-    });
-
-    it("should handle all env vars being set", () => {
-      process.env.OPENAPI_INPUT = "custom/path/spec.yaml";
-      process.env.OPENAPI_OUTPUT = "custom/dist/custom.arazzo.yaml";
-
-      const options = getOptions();
-
-      expect(options).toEqual({
-        input: "custom/path/spec.yaml",
-        output: "custom/dist/custom.arazzo.yaml",
-      });
+      const exitCode = run(["generate-arazzo", "bad.yaml"], "inherit");
+      expect(exitCode).toBe(2);
     });
   });
 
   describe("generateArazzo", () => {
-    beforeEach(() => {
-      vi.mocked(fs.existsSync).mockReturnValue(true);
-      vi.mocked(execSync).mockReturnValue(Buffer.from(""));
+    it("should use provided input", () => {
+      const run = createRun();
+
+      expect(generateArazzo(run)).toBe(0);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("openapi/openapi.yaml");
     });
 
-    it("should call execSync with correct command", () => {
-      generateArazzo();
+    it("should use custom input when provided", () => {
+      const run = createRun({ input: "custom/spec.yaml" });
 
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining(
-          "npx --no @redocly/cli generate-arazzo openapi/openapi.yaml --output-file dist/auto-generated.arazzo.yaml",
-        ),
-        { stdio: "inherit" },
+      generateArazzo(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("custom/spec.yaml");
+    });
+
+    it("should use default output path", () => {
+      const run = createRun();
+
+      generateArazzo(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--output-file");
+      expect(call.args).toContain("arazzo/auto-generated.arazzo.yaml");
+    });
+
+    it("should use custom output when provided", () => {
+      const run = createRun({
+        options: { output: "custom/workflows.arazzo.yaml" },
+      });
+
+      generateArazzo(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--output-file");
+      expect(call.args).toContain("custom/workflows.arazzo.yaml");
+    });
+
+    it("should use ignore stdio when globals.silent is true", () => {
+      const run = createRun({ globals: { quiet: false, silent: true } });
+
+      generateArazzo(run);
+      getSpawnCall("ignore");
+    });
+
+    it("should suppress wrapper logging when quiet", () => {
+      const logSpy = vi.spyOn(console, "log");
+
+      const run = createRun({ globals: { quiet: true, silent: false } });
+
+      generateArazzo(run);
+
+      expect(logSpy).not.toHaveBeenCalled();
+    });
+
+    it("should show wrapper logging when not quiet", () => {
+      const logSpy = vi.spyOn(console, "log");
+
+      const run = createRun({ globals: { quiet: false, silent: false } });
+
+      generateArazzo(run);
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Redocly generate-arazzo"),
       );
     });
 
-    it("should create output directory before generation", () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false);
-      const mkdirSpy = vi
-        .spyOn(fs, "mkdirSync")
-        .mockImplementation(() => undefined);
-
-      generateArazzo();
-
-      expect(mkdirSpy).toHaveBeenCalledWith("dist", { recursive: true });
-    });
-
-    it("should use custom environment variables", () => {
-      process.env.OPENAPI_INPUT = "custom/path/spec.yaml";
-      process.env.OPENAPI_OUTPUT = "custom/dist/custom.arazzo.yaml";
-
-      generateArazzo();
-
-      const command = vi.mocked(execSync).mock.calls[0][0];
-      expect(command).toContain("custom/path/spec.yaml");
-      expect(command).toContain("custom/dist/custom.arazzo.yaml");
-    });
-
-    it("should exit process with code 1 on generation failure", () => {
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
-      const mockError = vi.spyOn(console, "error").mockImplementation(() => {});
-
-      vi.mocked(execSync).mockImplementation(() => {
-        throw new Error("Generation failed");
+    it("should forward passthrough args to redocly", () => {
+      const run = createRun({
+        passthrough: ["--some-future-option"],
       });
 
-      generateArazzo();
+      generateArazzo(run);
 
-      expect(mockExit).toHaveBeenCalledWith(1);
-      expect(mockError).toHaveBeenCalledWith("❌ Arazzo generation failed!");
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--some-future-option");
+    });
 
-      mockExit.mockRestore();
-      mockError.mockRestore();
+    it("should return non-zero exit code on generation failure", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        status: 1,
+      });
+
+      const run = createRun();
+
+      expect(generateArazzo(run)).toBe(1);
+    });
+
+    it("should throw when spawnSync errors", () => {
+      vi.mocked(spawnSync).mockReturnValue({
+        ...okSpawnResult(),
+        error: new Error("spawn failed"),
+      });
+
+      const run = createRun();
+
+      expect(() => generateArazzo(run)).toThrow("spawn failed");
     });
   });
 });

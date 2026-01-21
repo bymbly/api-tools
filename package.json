@@ -1,11 +1,15 @@
 {
-  "name": "@bymbly/openapi-tools",
+  "name": "@bymbly/api-tools",
+  "type": "module",
   "version": "1.0.0",
-  "description": "Standardized CLI tooling for OpenAPI specifications",
+  "description": "Unified API tooling CLI for OpenAPI, AsyncAPI, Redocly, Arazzo, and Spectral.",
   "license": "Apache-2.0",
   "keywords": [
     "openapi",
+    "asyncapi",
+    "arazzo",
     "redocly",
+    "spectral",
     "cli",
     "tools",
     "api"
@@ -21,38 +25,48 @@
     "@bymbly:registry": "https://npm.pkg.github.com"
   },
   "bin": {
-    "redocly-bundle": "./dist/bin/redocly/bundle.js",
-    "redocly-lint": "./dist/bin/redocly/lint.js",
-    "redocly-build-docs": "./dist/bin/redocly/build-docs.js",
-    "redocly-generate-arazzo": "./dist/bin/redocly/generate-arazzo.js",
-    "redocly-respect": "./dist/bin/redocly/respect.js"
+    "api-tools": "dist/bin/api-tools.js"
   },
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "prepublishOnly": "npm run build",
+    "dev": "npm run watch",
+    "build": "tsc -p tsconfig.build.json && npm run copy:defaults",
     "test": "vitest run",
+    "build:clean": "npm run clean && npm run build",
+    "pretest": "npm run build",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build:clean",
+    "watch": "npm run copy:defaults && tsc --watch",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:update": "vitest --update",
+    "typecheck": "tsc",
+    "lint": "npm run lint:md && npm run lint:eslint",
+    "lint:check": "npm run lint:md:check && npm run lint:eslint:check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "npm run lint:md",
-    "lint:check": "npm run lint:md:check",
     "lint:md": "markdownlint-cli2 --fix",
     "lint:md:check": "markdownlint-cli2",
-    "clean:dist": "rm -rf ./dist"
+    "lint:eslint": "eslint . --fix",
+    "lint:eslint:check": "eslint .",
+    "clean": "npm run clean:dist",
+    "clean:dist": "rm -rf ./dist",
+    "copy:defaults": "copyfiles --all defaults/* dist/"
   },
   "dependencies": {
+    "@commander-js/extra-typings": "^14.0.0",
     "@redocly/cli": "^2.12.3",
     "@stoplight/spectral-cli": "^6.15.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/node": "^24.10.1",
     "@vitest/ui": "^4.0.15",
+    "copyfiles": "^2.4.1",
+    "eslint": "^9.39.2",
     "markdownlint-cli2": "0.20.0",
     "prettier": "3.7.4",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.52.0",
     "vitest": "^4.0.15"
   }
 }

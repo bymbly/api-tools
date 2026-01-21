@@ -2,12 +2,16 @@ arazzo: 1.0.1
 info:
   title: Simple Test API
   version: 1.0.0
+  description: A simple test API for Arazzo workflow testing.
+  summary: This API is used to validate Arazzo workflows.
 sourceDescriptions:
   - name: openapi
     type: openapi
     url: ../test/fixtures/valid/simple-spec/openapi.yaml
 workflows:
   - workflowId: get-test-workflow
+    description: A simple workflow to test GET operation.
+    summary: Simple GET Test
     inputs:
       $ref: "#/components/inputs/BearerToken"
     parameters:
@@ -16,6 +20,7 @@ workflows:
         in: header
     steps:
       - stepId: get-test-step
+        description: Perform a GET request to the test endpoint.
         operationId: $sourceDescriptions.openapi.getTest
         successCriteria:
           - condition: $statusCode == 200

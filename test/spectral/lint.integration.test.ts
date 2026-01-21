@@ -1,11 +1,15 @@
+import { exec, ExecException } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { runCli } from "../helper.js";
 
-describe("Redocly Lint Integration Tests", () => {
+const execAsync = promisify(exec);
+
+describe("Spectral Lint Integration Tests", () => {
   const originalCwd = process.cwd();
   let tempDir: string;
+  const binPath = path.join(originalCwd, "dist/bin/api-tools.js");
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(process.cwd(), "test-temp-"));
@@ -16,6 +20,38 @@ describe("Redocly Lint Integration Tests", () => {
     process.chdir(originalCwd);
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
+
+  async function runCli(args: string[]): Promise<{
+    stdout: string;
+    stderr: string;
+    exitCode: number;
+  }> {
+    try {
+      const { stdout, stderr } = await execAsync(
+        `node ${binPath} ${args.join(" ")}`,
+      );
+      return { stdout, stderr, exitCode: 0 };
+    } catch (error) {
+      if (isExecException(error)) {
+        return {
+          stdout: error.stdout ?? "",
+          stderr: error.stderr ?? "",
+          exitCode: error.code ?? 1,
+        };
+      }
+      throw error;
+    }
+  }
+
+  function isExecException(error: unknown): error is ExecException {
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      "stdout" in error &&
+      "stderr" in error
+    );
+  }
 
   describe("auto-detection", () => {
     it("should lint all found documents when no flags specified", async () => {
@@ -38,7 +74,7 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--silent"]);
+      const result = await runCli(["spectral", "lint", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
@@ -49,12 +85,12 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--silent"]);
+      const result = await runCli(["spectral", "lint", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
     it("should fail when no documents found", async () => {
-      const result = await runCli(["redocly", "lint", "--silent"]);
+      const result = await runCli(["spectral", "lint", "--silent"]);
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("no input documents found");
     });
@@ -74,7 +110,7 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--silent"]);
+      const result = await runCli(["spectral", "lint", "--silent"]);
       expect(result.exitCode).not.toBe(0);
     });
   });
@@ -94,7 +130,12 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
       expect(result.exitCode).toBe(0);
     });
 
@@ -106,7 +147,7 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       const result = await runCli([
-        "redocly",
+        "spectral",
         "lint",
         "--asyncapi",
         "--silent",
@@ -121,7 +162,7 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--arazzo", "--silent"]);
+      const result = await runCli(["spectral", "lint", "--arazzo", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
@@ -139,7 +180,7 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       const result = await runCli([
-        "redocly",
+        "spectral",
         "lint",
         "--openapi",
         "--asyncapi",
@@ -150,7 +191,12 @@ describe("Redocly Lint Integration Tests", () => {
 
     it("should fail when specified document type doesn't exist", async () => {
       // no documents created
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("no input documents found");
     });
@@ -175,7 +221,7 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       const result = await runCli([
-        "redocly",
+        "spectral",
         "lint",
         "custom/spec.yaml",
         "--openapi", // this should be ignored
@@ -203,7 +249,7 @@ describe("Redocly Lint Integration Tests", () => {
 
       // should pass because it only lints custom/spec.yaml
       const result = await runCli([
-        "redocly",
+        "spectral",
         "lint",
         "custom/spec.yaml",
         "--silent",
@@ -220,7 +266,12 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
       expect(result.exitCode).toBe(0);
     });
 
@@ -231,11 +282,16 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should pass when local redocly.yaml exists", async () => {
+    it("should pass when local .spectral.yaml exists", async () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -243,11 +299,16 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       fs.cpSync(
-        path.join(originalCwd, "defaults/redocly.yaml"),
-        path.join(tempDir, "redocly.yaml"),
+        path.join(originalCwd, "defaults/spectral.yaml"),
+        path.join(tempDir, ".spectral.yaml"),
       );
 
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
       expect(result.exitCode).toBe(0);
     });
 
@@ -258,7 +319,12 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--silent",
+      ]);
       expect(result.exitCode).not.toBe(0);
     });
   });
@@ -272,7 +338,7 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       const result = await runCli([
-        "redocly",
+        "spectral",
         "lint",
         "--asyncapi",
         "--silent",
@@ -288,7 +354,7 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       const result = await runCli([
-        "redocly",
+        "spectral",
         "lint",
         "--asyncapi",
         "--silent",
@@ -305,7 +371,7 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--arazzo", "--silent"]);
+      const result = await runCli(["spectral", "lint", "--arazzo", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
@@ -316,7 +382,7 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--arazzo", "--silent"]);
+      const result = await runCli(["spectral", "lint", "--arazzo", "--silent"]);
       expect(result.exitCode).not.toBe(0);
     });
   });
@@ -333,7 +399,7 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       const result = await runCli([
-        "redocly",
+        "spectral",
         "lint",
         "custom/spec.yaml",
         "--silent",
@@ -341,7 +407,7 @@ describe("Redocly Lint Integration Tests", () => {
       expect(result.exitCode).toBe(0);
     });
 
-    it("should work with custom config path", async () => {
+    it("should work with custom ruleset path", async () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -349,16 +415,16 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       fs.cpSync(
-        path.join(originalCwd, "defaults/redocly.yaml"),
-        path.join(tempDir, "custom-redocly.yaml"),
+        path.join(originalCwd, "defaults/spectral.yaml"),
+        path.join(tempDir, "custom-spectral.yaml"),
       );
 
       const result = await runCli([
-        "redocly",
+        "spectral",
         "lint",
         "--openapi",
-        "--config",
-        "custom-redocly.yaml",
+        "--ruleset",
+        "custom-spectral.yaml",
         "--silent",
       ]);
       expect(result.exitCode).toBe(0);
@@ -372,14 +438,75 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       const result = await runCli([
-        "redocly",
+        "spectral",
         "lint",
         "--openapi",
         "--format",
         "json",
+        "--output",
+        "lint-results.json",
         "--silent",
       ]);
 
+      expect(result.exitCode).toBe(0);
+      expect(fs.existsSync(path.join(tempDir, "lint-results.json"))).toBe(true);
+
+      const content = fs.readFileSync(
+        path.join(tempDir, "lint-results.json"),
+        "utf8",
+      );
+      expect(() => JSON.parse(content) as unknown).not.toThrow();
+    });
+
+    it("should work with custom fail severity", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--fail-severity",
+        "error",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should work with display-only-failures flag", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--display-only-failures",
+        "--silent",
+      ]);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it("should work with verbose flag", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "spectral",
+        "lint",
+        "--openapi",
+        "--verbose",
+        "--silent",
+      ]);
       expect(result.exitCode).toBe(0);
     });
 
@@ -391,41 +518,20 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       const result = await runCli([
-        "redocly",
+        "spectral",
         "lint",
         "--openapi",
         "--silent",
         "--",
-        "--version",
+        "--ignore-unknown-format",
       ]);
       expect(result.exitCode).toBe(0);
-    });
-
-    it("should block --generate-ignore-file with bundled config", async () => {
-      fs.cpSync(
-        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
-        path.join(tempDir, "openapi"),
-        { recursive: true },
-      );
-
-      const result = await runCli([
-        "redocly",
-        "lint",
-        "--openapi",
-        "--silent",
-        "--",
-        "--generate-ignore-file",
-      ]);
-      expect(result.exitCode).not.toBe(0);
-      expect(result.stderr).toContain(
-        "Cannot use --generate-ignore-file with bundled config",
-      );
     });
 
     it("should create config file with init command", async () => {
-      const result = await runCli(["redocly", "init"]);
+      const result = await runCli(["spectral", "init"]);
       expect(result.exitCode).toBe(0);
-      expect(fs.existsSync(path.join(tempDir, "redocly.yaml"))).toBe(true);
+      expect(fs.existsSync(path.join(tempDir, "spectral.yaml"))).toBe(true);
     });
 
     it("should respect --cwd flag", async () => {
@@ -441,7 +547,7 @@ describe("Redocly Lint Integration Tests", () => {
       const result = await runCli([
         "--cwd",
         subDir,
-        "redocly",
+        "spectral",
         "lint",
         "--openapi",
         "--silent",
@@ -450,16 +556,16 @@ describe("Redocly Lint Integration Tests", () => {
     });
   });
 
-  describe("raw redocly passthrough", () => {
-    it("should pass unknown commands directly to redocly", async () => {
-      const result = await runCli(["redocly", "--", "--help"]);
+  describe("raw spectral passthrough", () => {
+    it("should pass unknown commands directly to spectral", async () => {
+      const result = await runCli(["spectral", "--", "--help"]);
       expect(result.stdout).toContain("version");
       expect(result.stdout).toContain("help");
     });
 
     it("should show help when no args provided", async () => {
-      const result = await runCli(["redocly"]);
-      expect(result.stdout).toContain("Redocly-related commands");
+      const result = await runCli(["spectral"]);
+      expect(result.stdout).toContain("Spectral-related commands");
     });
   });
 });
