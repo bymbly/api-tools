@@ -27,10 +27,10 @@ export const VALID_OUTPUT_FORMATS = [
   "gitlab",
 ] as const;
 
-export const VALID_FAIL_SEVERITIES = ["error", "warn", "info", "hint"] as const;
+const VALID_FAIL_SEVERITIES = ["error", "warn", "info", "hint"] as const;
 
-export type OutputFormat = (typeof VALID_OUTPUT_FORMATS)[number];
-export type FailSeverity = (typeof VALID_FAIL_SEVERITIES)[number];
+type OutputFormat = (typeof VALID_OUTPUT_FORMATS)[number];
+type FailSeverity = (typeof VALID_FAIL_SEVERITIES)[number];
 
 export interface Options extends DocTypeOptions {
   format: OutputFormat;

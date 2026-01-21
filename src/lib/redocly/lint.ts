@@ -13,7 +13,7 @@ import {
 } from "../cli/runtime.js";
 import { resolveConfig, run } from "./cli.js";
 
-export const VALID_OUTPUT_FORMATS = [
+const VALID_OUTPUT_FORMATS = [
   "codeframe",
   "stylish",
   "json",
@@ -24,7 +24,7 @@ export const VALID_OUTPUT_FORMATS = [
   "summary",
 ] as const;
 
-export type OutputFormat = (typeof VALID_OUTPUT_FORMATS)[number];
+type OutputFormat = (typeof VALID_OUTPUT_FORMATS)[number];
 
 export interface Options extends DocTypeOptions {
   format: OutputFormat;

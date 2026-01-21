@@ -10,7 +10,7 @@ export interface Options {
 
 export const buildDocsCommand = new Command("build-docs")
   .description("Build HTML documentation from OpenAPI documents using Redocly")
-  .argument("[input]", "Document path (default: openapi/openapi.yaml)")
+  .argument("[input]", "OpenAPI document path (default: openapi/openapi.yaml)")
 
   .option("--output <file>", "Output HTML file path", "dist/docs/openapi.html")
   .option("--config <file>", "Config file path (overrides auto/bundled)")
