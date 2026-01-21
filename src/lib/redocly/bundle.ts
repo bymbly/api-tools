@@ -1,56 +1,105 @@
-import { execSync } from "child_process";
-import { createPath, createValidator } from "../utils.js";
+import {
+  Command,
+  CommandUnknownOpts,
+  Option,
+} from "@commander-js/extra-typings";
+import { ExecuteParams, runSingleDocumentCommand } from "../cli/helpers.js";
+import { isQuiet, ResolvedConfig, resolveStdio } from "../cli/runtime.js";
+import { resolveConfig, run } from "./cli.js";
 
-const VALID_FORMATS = ["json", "yaml"] as const;
-export type Format = (typeof VALID_FORMATS)[number];
+const VALID_EXTENSIONS = ["json", "yaml", "yml"] as const;
 
-export interface BundleOptions {
-  input: string;
+type OutputExtension = (typeof VALID_EXTENSIONS)[number];
+
+export interface Options {
   output: string;
-  format: Format;
-  configPath?: string;
+  ext?: OutputExtension;
+  config?: string;
+  dereferenced: boolean;
 }
 
-const formatValidator = createValidator(VALID_FORMATS);
-export const isValidFormat = formatValidator.isValid;
+export const bundleCommand = new Command("bundle")
+  .description("Bundle API descriptions into a single file using Redocly")
+  .argument("[input]", "Document path (default: openapi/openapi.yaml)")
 
-export function getOptions(): BundleOptions {
-  const formatEnv = process.env.OPENAPI_FORMAT;
-  const format = formatEnv && isValidFormat(formatEnv) ? formatEnv : "yaml";
+  .option(
+    "--output <file>",
+    "Output file or directory path (default: dist/bundle/openapi.yaml)",
+    "dist/bundle/openapi.yaml",
+  )
+  .addOption(
+    new Option(
+      "--ext <extension>",
+      "Output file extension (overrides extension in --output)",
+    ).choices([...VALID_EXTENSIONS]),
+  )
+  .option("--config <file>", "Config file path (overrides auto/bundled)")
+  .option(
+    "--dereferenced",
+    "Generate fully dereferenced bundle (no $ref)",
+    false,
+  )
+  .allowExcessArguments(true)
+  .action(runBundle);
 
-  return {
-    input: process.env.OPENAPI_INPUT ?? "openapi/openapi.yaml",
-    output: process.env.OPENAPI_OUTPUT ?? "dist/openapi",
-    format,
-    configPath: process.env.OPENAPI_CONFIG,
-  };
+function runBundle(
+  input: string | undefined,
+  options: Options,
+  cmd: CommandUnknownOpts,
+): void {
+  runSingleDocumentCommand({
+    input,
+    options,
+    cmd,
+    defaultInput: "openapi/openapi.yaml",
+    execute: bundle,
+  });
 }
 
-export function bundle(): void {
-  const options = getOptions();
+export function bundle(params: ExecuteParams<Options>): number {
+  const { input, options, globals } = params;
 
-  const outputFile = `${options.output}.${options.format}`;
+  const config = resolveConfig(options.config);
+  const args = buildArgs(params, config);
+  const stdio = resolveStdio(globals);
+  const quiet = isQuiet(globals);
 
-  console.log(`📦 Bundling OpenAPI spec...`);
-  console.log(`   Input: ${options.input}`);
-  console.log(`   Output: ${options.output}`);
-  console.log(`   Format: ${options.format}`);
-  console.log(`   Config: ${options.configPath ?? "default"}`);
-
-  createPath(outputFile);
-
-  let command = `npx --no @redocly/cli bundle ${options.input} --output ${outputFile}`;
-  if (options.configPath) {
-    command += ` --config ${options.configPath}`;
+  if (!quiet) {
+    console.log(`📦 Redocly bundle...`);
+    console.log(`   Input: ${input}`);
+    console.log(`   Output: ${options.output}`);
+    if (options.ext) {
+      console.log(`   Extension: ${options.ext}`);
+    }
+    console.log(`   Config: ${config.path ?? "auto"} (${config.source})`);
   }
 
-  try {
-    execSync(command, { stdio: "inherit" });
+  return run(args, stdio);
+}
 
-    console.log(`✅ Bundle created successfully: ${outputFile}`);
-  } catch (error) {
-    console.error(`❌ Bundling failed!`);
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
+function buildArgs(
+  params: ExecuteParams<Options>,
+  config: ResolvedConfig,
+): string[] {
+  const { input, options, passthrough } = params;
+
+  const args = ["bundle", input, "--output", options.output];
+
+  // only pass --config if we resolved an explicit path (cli or bundled)
+  if (config.path) args.push("--config", config.path);
+
+  if (options.ext) {
+    args.push("--ext", options.ext);
   }
+
+  if (options.dereferenced) {
+    args.push("--dereferenced");
+  }
+
+  // forward any passthrough args to redocly
+  if (passthrough.length > 0) {
+    args.push(...passthrough);
+  }
+
+  return args;
 }

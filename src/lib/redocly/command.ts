@@ -1,6 +1,7 @@
 import { Command } from "@commander-js/extra-typings";
 import { createInitCommand, handleRawPassthrough } from "../cli/helpers.js";
 import { buildDocsCommand } from "./build-docs.js";
+import { bundleCommand } from "./bundle.js";
 import { run } from "./cli.js";
 import { lintCommand } from "./lint.js";
 
@@ -12,4 +13,5 @@ export const redoclyCommand = new Command("redocly")
   })
   .addCommand(createInitCommand("redocly.yaml"))
   .addCommand(lintCommand)
-  .addCommand(buildDocsCommand);
+  .addCommand(buildDocsCommand)
+  .addCommand(bundleCommand);
