@@ -3,6 +3,7 @@ import { createInitCommand, handleRawPassthrough } from "../cli/helpers.js";
 import { buildDocsCommand } from "./build-docs.js";
 import { bundleCommand } from "./bundle.js";
 import { run } from "./cli.js";
+import { generateArazzoCommand } from "./generate-arazzo.js";
 import { lintCommand } from "./lint.js";
 
 export const redoclyCommand = new Command("redocly")
@@ -14,4 +15,5 @@ export const redoclyCommand = new Command("redocly")
   .addCommand(createInitCommand("redocly.yaml"))
   .addCommand(lintCommand)
   .addCommand(buildDocsCommand)
-  .addCommand(bundleCommand);
+  .addCommand(bundleCommand)
+  .addCommand(generateArazzoCommand);

@@ -1,118 +1,185 @@
-import fs from "fs";
-import path from "path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { generateArazzo } from "../../src/lib/redocly/generate-arazzo.js";
+import fs from "node:fs";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { runCli } from "../helper.js";
 
-describe("Generate Arazzo Integration Tests", () => {
-  const originalEnv = process.env;
+describe("Redocly Generate-Arazzo Integration Tests", () => {
   const originalCwd = process.cwd();
   let tempDir: string;
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(process.cwd(), "test-temp-"));
     process.chdir(tempDir);
-    process.env = { ...originalEnv };
   });
 
   afterEach(() => {
     process.chdir(originalCwd);
-    process.env = originalEnv;
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  describe("valid specs", () => {
-    it("should generate Arazzo workflows for simple spec", () => {
+  describe("OpenAPI documents", () => {
+    it("should generate Arazzo workflows for simple spec", async () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
-        {
-          recursive: true,
-        },
+        { recursive: true },
       );
 
-      generateArazzo();
+      const result = await runCli([
+        "redocly",
+        "generate-arazzo",
+        "openapi/openapi.yaml",
+        "--silent",
+      ]);
 
-      expect(fs.existsSync("dist/auto-generated.arazzo.yaml")).toBe(true);
+      expect(result.exitCode).toBe(0);
+      expect(fs.existsSync("arazzo/auto-generated.arazzo.yaml")).toBe(true);
 
-      const arazzoYaml = fs.readFileSync(
-        "dist/auto-generated.arazzo.yaml",
+      const arazzo = fs.readFileSync(
+        "arazzo/auto-generated.arazzo.yaml",
         "utf-8",
       );
-
-      expect(arazzoYaml).toContain("workflows:");
-      expect(arazzoYaml).toContain("Simple Test API");
+      expect(arazzo).toContain("arazzo:");
+      expect(arazzo).toContain("workflows:");
+      expect(arazzo).toContain("Simple Test API");
     });
 
-    it("should generate Arazzo workflows for spec with references", () => {
+    it("should generate Arazzo workflows for spec with references", async () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/spec-with-refs"),
         path.join(tempDir, "openapi"),
-        {
-          recursive: true,
-        },
+        { recursive: true },
       );
 
-      generateArazzo();
+      const result = await runCli([
+        "redocly",
+        "generate-arazzo",
+        "openapi/openapi.yaml",
+        "--silent",
+      ]);
 
-      expect(fs.existsSync("dist/auto-generated.arazzo.yaml")).toBe(true);
+      expect(result.exitCode).toBe(0);
+      expect(fs.existsSync("arazzo/auto-generated.arazzo.yaml")).toBe(true);
 
-      const arazzoYaml = fs.readFileSync(
-        "dist/auto-generated.arazzo.yaml",
+      const arazzo = fs.readFileSync(
+        "arazzo/auto-generated.arazzo.yaml",
         "utf-8",
       );
-
-      expect(arazzoYaml).toContain("workflows:");
-      expect(arazzoYaml).toContain("Test API with References");
+      expect(arazzo).toContain("arazzo:");
+      expect(arazzo).toContain("workflows:");
+      expect(arazzo).toContain("Test API with References");
     });
   });
 
-  describe("invalid specs", () => {
-    it("should fail for nonexistent file", () => {
-      process.env.OPENAPI_INPUT = "openapi/nonexistent.yaml";
+  describe("default input handling", () => {
+    it("should use default input path when no argument provided", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
 
-      const mockExit = vi
-        .spyOn(process, "exit")
-        .mockImplementation(() => undefined as never);
+      const result = await runCli(["redocly", "generate-arazzo", "--silent"]);
 
-      generateArazzo();
+      expect(result.exitCode).toBe(0);
+      expect(fs.existsSync("arazzo/auto-generated.arazzo.yaml")).toBe(true);
+    });
 
-      expect(mockExit).toHaveBeenCalledWith(1);
-      mockExit.mockRestore();
+    it("should fail when no input provided and default doesn't exist", async () => {
+      const result = await runCli(["redocly", "generate-arazzo", "--silent"]);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("no input document specified");
     });
   });
 
-  describe("custom configurations", () => {
-    it("should generate Arazzo workflows with custom input path", () => {
-      fs.mkdirSync(path.join(tempDir, "custom"));
+  describe("custom options", () => {
+    it("should work with custom input path", async () => {
+      fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
       fs.copyFileSync(
         path.join(
           originalCwd,
           "test/fixtures/openapi/valid/simple-spec/openapi.yaml",
         ),
-        path.join(tempDir, "custom", "spec.yaml"),
+        path.join(tempDir, "custom/spec.yaml"),
       );
 
-      process.env.OPENAPI_INPUT = "custom/spec.yaml";
+      const result = await runCli([
+        "redocly",
+        "generate-arazzo",
+        "custom/spec.yaml",
+        "--silent",
+      ]);
 
-      generateArazzo();
-
-      expect(fs.existsSync("dist/auto-generated.arazzo.yaml")).toBe(true);
+      expect(result.exitCode).toBe(0);
+      expect(fs.existsSync("arazzo/auto-generated.arazzo.yaml")).toBe(true);
     });
 
-    it("should generate Arazzo workflows with custom output path", () => {
+    it("should work with custom output path", async () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
-        {
-          recursive: true,
-        },
+        { recursive: true },
       );
 
-      process.env.OPENAPI_OUTPUT = "custom-dist/custom.arazzo.yaml";
+      const result = await runCli([
+        "redocly",
+        "generate-arazzo",
+        "openapi/openapi.yaml",
+        "--output",
+        "custom-arazzo/workflows.arazzo.yaml",
+        "--silent",
+      ]);
 
-      generateArazzo();
+      expect(result.exitCode).toBe(0);
+      expect(fs.existsSync("custom-arazzo/workflows.arazzo.yaml")).toBe(true);
+      expect(fs.existsSync("arazzo/auto-generated.arazzo.yaml")).toBe(false);
+    });
 
-      expect(fs.existsSync("custom-dist/custom.arazzo.yaml")).toBe(true);
+    it("should work with passthrough args", async () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(tempDir, "openapi"),
+        { recursive: true },
+      );
+
+      // note: generate-arazzo doesn't have many passthrough options documented
+      // this test ensures passthrough mechanism works if they add options in future
+      const result = await runCli([
+        "redocly",
+        "generate-arazzo",
+        "openapi/openapi.yaml",
+        "--silent",
+        "--",
+      ]);
+
+      expect(result.exitCode).toBe(0);
+      expect(fs.existsSync("arazzo/auto-generated.arazzo.yaml")).toBe(true);
+    });
+
+    it("should respect --cwd flag", async () => {
+      const subDir = path.join(tempDir, "subdir");
+      fs.mkdirSync(subDir, { recursive: true });
+
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
+        path.join(subDir, "openapi"),
+        { recursive: true },
+      );
+
+      const result = await runCli([
+        "--cwd",
+        subDir,
+        "redocly",
+        "generate-arazzo",
+        "openapi/openapi.yaml",
+        "--silent",
+      ]);
+
+      expect(result.exitCode).toBe(0);
+      expect(
+        fs.existsSync(path.join(subDir, "arazzo/auto-generated.arazzo.yaml")),
+      ).toBe(true);
     });
   });
 });
