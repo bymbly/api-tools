@@ -10,6 +10,10 @@ import { respectCommand } from "./respect.js";
 export const redoclyCommand = new Command("redocly")
   .description("Redocly-related commands")
   .allowExcessArguments(true)
+  .configureHelp({
+    sortSubcommands: true,
+    sortOptions: true,
+  })
   .action((opts, cmd) => {
     handleRawPassthrough(opts, cmd, run);
   })
