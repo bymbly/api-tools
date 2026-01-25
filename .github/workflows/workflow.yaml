@@ -39,4 +39,7 @@ jobs:
       packages: write
       issues: write
       pull-requests: write
+      id-token: write # required for OIDC publishing
     uses: bymbly/gha-workflows/.github/workflows/npm-semantic-release.yaml@main
+    with:
+      registry-url: "https://registry.npmjs.org/"
