@@ -9,6 +9,10 @@ customization through CLI options and passthrough arguments.
 
 **Wraps:** [Redocly](https://github.com/Redocly/redocly-cli) | [Spectral](https://github.com/stoplightio/spectral)
 
+[![API Tools](https://github.com/bymbly/api-tools/actions/workflows/workflow.yaml/badge.svg)](https://github.com/bymbly/api-tools/actions/workflows/workflow.yaml)
+![NPM Version](https://img.shields.io/npm/v/@bymbly/api-tools)
+![NPM License](https://img.shields.io/npm/l/@bymbly/api-tools)
+
 ## Features
 
 - **Single unified CLI** - One tool for all API spec operations
