@@ -2,7 +2,7 @@
   "name": "@bymbly/api-tools",
   "type": "module",
   "version": "1.0.0",
-  "description": "Unified API tooling CLI for OpenAPI, AsyncAPI, Redocly, Arazzo, and Spectral.",
+  "description": "Unified, opinionated CLI wrapper for API specification tooling.",
   "license": "Apache-2.0",
   "keywords": [
     "openapi",
@@ -20,9 +20,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bymbly/api-tools.git"
-  },
-  "publishConfig": {
-    "@bymbly:registry": "https://npm.pkg.github.com"
   },
   "bin": {
     "api-tools": "dist/bin/api-tools.js"

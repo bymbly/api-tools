@@ -1,9 +1,13 @@
 # @bymbly/api-tools
 
-Unified, opinionated CLI wrapper for API specification tooling (Spectral, Redocly).
+Unified, opinionated CLI wrapper for API specification tooling.
 
 Standardizes common workflows across projects with sensible defaults while allowing full
 customization through CLI options and passthrough arguments.
+
+**Supports:** OpenAPI, AsyncAPI, Arazzo
+
+**Wraps:** [Redocly](https://github.com/Redocly/redocly-cli) | [Spectral](https://github.com/stoplightio/spectral)
 
 ## Features
 
@@ -16,29 +20,9 @@ customization through CLI options and passthrough arguments.
 
 ## Installation
 
-1. Configure npm to use Github Packages for `@bymbly` scope:
-
-   ```bash
-   # Add to .npmrc in your project or globally (~/.npmrc)
-   @bymbly:registry=https://npm.pkg.github.com
-   //npm.pkg.github.com/:_authToken=${GITHUB_PACKAGES_TOKEN}
-   ```
-
-1. Create a GitHub Personal Access Token (Classic) with `read:packages` scope.
-
-1. Set environment variable:
-
-   ```bash
-   export GITHUB_PACKAGES_TOKEN=your_ghp_token_here
-   ```
-
-   [Github Packages Authentication Docs](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#authenticating-to-github-packages)
-
-1. Then install the package:
-
-   ```bash
-   npm install -D @bymbly/api-tools@latest
-   ```
+```bash
+npm install -D @bymbly/api-tools@latest
+```
 
 ## Quick Start
 
