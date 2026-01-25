@@ -18,7 +18,7 @@ describe("Redocly Lint Integration Tests", () => {
   });
 
   describe("auto-detection", () => {
-    it("should lint all found documents when no flags specified", async () => {
+    it("should lint all found documents when no flags specified", () => {
       // create all three types
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
@@ -38,28 +38,28 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--silent"]);
+      const result = runCli(["redocly", "lint", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should succeed when only one document type exists", async () => {
+    it("should succeed when only one document type exists", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--silent"]);
+      const result = runCli(["redocly", "lint", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should fail when no documents found", async () => {
-      const result = await runCli(["redocly", "lint", "--silent"]);
+    it("should fail when no documents found", () => {
+      const result = runCli(["redocly", "lint", "--silent"]);
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("no input documents found");
     });
 
-    it("should fail if any document fails", async () => {
+    it("should fail if any document fails", () => {
       // valid OpenAPI
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
@@ -74,13 +74,13 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--silent"]);
+      const result = runCli(["redocly", "lint", "--silent"]);
       expect(result.exitCode).not.toBe(0);
     });
   });
 
   describe("type-specific flags", () => {
-    it("should lint only OpenAPI when --openapi specified", async () => {
+    it("should lint only OpenAPI when --openapi specified", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -94,38 +94,33 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = runCli(["redocly", "lint", "--openapi", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should lint only AsyncAPI when --asyncapi specified", async () => {
+    it("should lint only AsyncAPI when --asyncapi specified", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
         path.join(tempDir, "asyncapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
-        "redocly",
-        "lint",
-        "--asyncapi",
-        "--silent",
-      ]);
+      const result = runCli(["redocly", "lint", "--asyncapi", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should lint only Arazzo when --arazzo specified", async () => {
+    it("should lint only Arazzo when --arazzo specified", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
         path.join(tempDir, "arazzo"),
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--arazzo", "--silent"]);
+      const result = runCli(["redocly", "lint", "--arazzo", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should lint multiple types when multiple flags specified", async () => {
+    it("should lint multiple types when multiple flags specified", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -138,7 +133,7 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "lint",
         "--openapi",
@@ -148,16 +143,16 @@ describe("Redocly Lint Integration Tests", () => {
       expect(result.exitCode).toBe(0);
     });
 
-    it("should fail when specified document type doesn't exist", async () => {
+    it("should fail when specified document type doesn't exist", () => {
       // no documents created
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = runCli(["redocly", "lint", "--openapi", "--silent"]);
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("no input documents found");
     });
   });
 
   describe("explicit path overrides type flags", () => {
-    it("should lint explicit path even when type flags present", async () => {
+    it("should lint explicit path even when type flags present", () => {
       fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
       fs.copyFileSync(
         path.join(
@@ -174,7 +169,7 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "lint",
         "custom/spec.yaml",
@@ -184,7 +179,7 @@ describe("Redocly Lint Integration Tests", () => {
       expect(result.exitCode).toBe(0);
     });
 
-    it("should only lint explicit path, not auto-detected ones", async () => {
+    it("should only lint explicit path, not auto-detected ones", () => {
       fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
       fs.copyFileSync(
         path.join(
@@ -202,7 +197,7 @@ describe("Redocly Lint Integration Tests", () => {
       );
 
       // should pass because it only lints custom/spec.yaml
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "lint",
         "custom/spec.yaml",
@@ -213,29 +208,29 @@ describe("Redocly Lint Integration Tests", () => {
   });
 
   describe("OpenAPI documents", () => {
-    it("should pass for simple valid spec with bundled default config", async () => {
+    it("should pass for simple valid spec with bundled default config", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = runCli(["redocly", "lint", "--openapi", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should pass for spec with references", async () => {
+    it("should pass for spec with references", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/spec-with-refs"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = runCli(["redocly", "lint", "--openapi", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should pass when local redocly.yaml exists", async () => {
+    it("should pass when local redocly.yaml exists", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -247,82 +242,72 @@ describe("Redocly Lint Integration Tests", () => {
         path.join(tempDir, "redocly.yaml"),
       );
 
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = runCli(["redocly", "lint", "--openapi", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should fail for invalid spec with bundled default config", async () => {
+    it("should fail for invalid spec with bundled default config", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/invalid/broken-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--openapi", "--silent"]);
+      const result = runCli(["redocly", "lint", "--openapi", "--silent"]);
       expect(result.exitCode).not.toBe(0);
     });
   });
 
   describe("AsyncAPI documents", () => {
-    it("should pass for simple valid AsyncAPI spec", async () => {
+    it("should pass for simple valid AsyncAPI spec", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
         path.join(tempDir, "asyncapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
-        "redocly",
-        "lint",
-        "--asyncapi",
-        "--silent",
-      ]);
+      const result = runCli(["redocly", "lint", "--asyncapi", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should fail for invalid AsyncAPI spec", async () => {
+    it("should fail for invalid AsyncAPI spec", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/asyncapi/invalid/broken-spec"),
         path.join(tempDir, "asyncapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
-        "redocly",
-        "lint",
-        "--asyncapi",
-        "--silent",
-      ]);
+      const result = runCli(["redocly", "lint", "--asyncapi", "--silent"]);
       expect(result.exitCode).not.toBe(0);
     });
   });
 
   describe("Arazzo documents", () => {
-    it("should pass for simple valid Arazzo spec", async () => {
+    it("should pass for simple valid Arazzo spec", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
         path.join(tempDir, "arazzo"),
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--arazzo", "--silent"]);
+      const result = runCli(["redocly", "lint", "--arazzo", "--silent"]);
       expect(result.exitCode).toBe(0);
     });
 
-    it("should fail for invalid Arazzo spec", async () => {
+    it("should fail for invalid Arazzo spec", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/arazzo/invalid/broken-spec"),
         path.join(tempDir, "arazzo"),
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "lint", "--arazzo", "--silent"]);
+      const result = runCli(["redocly", "lint", "--arazzo", "--silent"]);
       expect(result.exitCode).not.toBe(0);
     });
   });
 
   describe("custom options", () => {
-    it("should work with custom input path", async () => {
+    it("should work with custom input path", () => {
       fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
       fs.copyFileSync(
         path.join(
@@ -332,7 +317,7 @@ describe("Redocly Lint Integration Tests", () => {
         path.join(tempDir, "custom/spec.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "lint",
         "custom/spec.yaml",
@@ -341,7 +326,7 @@ describe("Redocly Lint Integration Tests", () => {
       expect(result.exitCode).toBe(0);
     });
 
-    it("should work with custom config path", async () => {
+    it("should work with custom config path", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -353,7 +338,7 @@ describe("Redocly Lint Integration Tests", () => {
         path.join(tempDir, "custom-redocly.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "lint",
         "--openapi",
@@ -364,14 +349,14 @@ describe("Redocly Lint Integration Tests", () => {
       expect(result.exitCode).toBe(0);
     });
 
-    it("should work with JSON output format", async () => {
+    it("should work with JSON output format", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "lint",
         "--openapi",
@@ -383,14 +368,14 @@ describe("Redocly Lint Integration Tests", () => {
       expect(result.exitCode).toBe(0);
     });
 
-    it("should work with passthrough args", async () => {
+    it("should work with passthrough args", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "lint",
         "--openapi",
@@ -401,14 +386,14 @@ describe("Redocly Lint Integration Tests", () => {
       expect(result.exitCode).toBe(0);
     });
 
-    it("should block --generate-ignore-file with bundled config", async () => {
+    it("should block --generate-ignore-file with bundled config", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "lint",
         "--openapi",
@@ -422,13 +407,13 @@ describe("Redocly Lint Integration Tests", () => {
       );
     });
 
-    it("should create config file with init command", async () => {
-      const result = await runCli(["redocly", "init"]);
+    it("should create config file with init command", () => {
+      const result = runCli(["redocly", "init"]);
       expect(result.exitCode).toBe(0);
       expect(fs.existsSync(path.join(tempDir, "redocly.yaml"))).toBe(true);
     });
 
-    it("should respect --cwd flag", async () => {
+    it("should respect --cwd flag", () => {
       const subDir = path.join(tempDir, "subdir");
       fs.mkdirSync(subDir, { recursive: true });
 
@@ -438,7 +423,7 @@ describe("Redocly Lint Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "--cwd",
         subDir,
         "redocly",
@@ -451,14 +436,14 @@ describe("Redocly Lint Integration Tests", () => {
   });
 
   describe("raw redocly passthrough", () => {
-    it("should pass unknown commands directly to redocly", async () => {
-      const result = await runCli(["redocly", "--", "--help"]);
+    it("should pass unknown commands directly to redocly", () => {
+      const result = runCli(["redocly", "--", "--help"]);
       expect(result.stdout).toContain("version");
       expect(result.stdout).toContain("help");
     });
 
-    it("should show help when no args provided", async () => {
-      const result = await runCli(["redocly"]);
+    it("should show help when no args provided", () => {
+      const result = runCli(["redocly"]);
       expect(result.stdout).toContain("Redocly-related commands");
     });
   });

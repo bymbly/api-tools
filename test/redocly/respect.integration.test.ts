@@ -23,14 +23,14 @@ describe("Redocly Respect Integration Tests", () => {
   });
 
   describe("Arazzo documents", () => {
-    it("should execute valid Arazzo workflow", async () => {
+    it("should execute valid Arazzo workflow", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
         path.join(tempDir, "arazzo"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",
@@ -41,14 +41,14 @@ describe("Redocly Respect Integration Tests", () => {
       expect(result.exitCode).not.toBe(127); // command not found
     });
 
-    it("should fail for invalid Arazzo spec", async () => {
+    it("should fail for invalid Arazzo spec", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/arazzo/invalid/broken-spec"),
         path.join(tempDir, "arazzo"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",
@@ -61,20 +61,20 @@ describe("Redocly Respect Integration Tests", () => {
   });
 
   describe("default input handling", () => {
-    it("should use default input path when no argument provided", async () => {
+    it("should use default input path when no argument provided", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/arazzo/valid/simple-spec"),
         path.join(tempDir, "arazzo"),
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "respect", "--silent"]);
+      const result = runCli(["redocly", "respect", "--silent"]);
 
       expect(result.exitCode).not.toBe(127);
     });
 
-    it("should fail when no input provided and default doesn't exist", async () => {
-      const result = await runCli(["redocly", "respect", "--silent"]);
+    it("should fail when no input provided and default doesn't exist", () => {
+      const result = runCli(["redocly", "respect", "--silent"]);
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("no input document specified");
@@ -90,7 +90,7 @@ describe("Redocly Respect Integration Tests", () => {
       );
     });
 
-    it("should work with custom input path", async () => {
+    it("should work with custom input path", () => {
       fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
       fs.copyFileSync(
         path.join(
@@ -100,7 +100,7 @@ describe("Redocly Respect Integration Tests", () => {
         path.join(tempDir, "custom/workflows.arazzo.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "respect",
         "custom/workflows.arazzo.yaml",
@@ -110,8 +110,8 @@ describe("Redocly Respect Integration Tests", () => {
       expect(result.exitCode).not.toBe(127);
     });
 
-    it("should accept workflow option", async () => {
-      const result = await runCli([
+    it("should accept workflow option", () => {
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",
@@ -123,8 +123,8 @@ describe("Redocly Respect Integration Tests", () => {
       expect(result.exitCode).not.toBe(127);
     });
 
-    it("should accept skip option", async () => {
-      const result = await runCli([
+    it("should accept skip option", () => {
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",
@@ -136,8 +136,8 @@ describe("Redocly Respect Integration Tests", () => {
       expect(result.exitCode).not.toBe(127);
     });
 
-    it("should accept verbose flag", async () => {
-      const result = await runCli([
+    it("should accept verbose flag", () => {
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",
@@ -148,8 +148,8 @@ describe("Redocly Respect Integration Tests", () => {
       expect(result.exitCode).not.toBe(127);
     });
 
-    it("should accept input parameters", async () => {
-      const result = await runCli([
+    it("should accept input parameters", () => {
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",
@@ -161,8 +161,8 @@ describe("Redocly Respect Integration Tests", () => {
       expect(result.exitCode).not.toBe(127);
     });
 
-    it("should accept server overrides", async () => {
-      const result = await runCli([
+    it("should accept server overrides", () => {
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",
@@ -174,8 +174,8 @@ describe("Redocly Respect Integration Tests", () => {
       expect(result.exitCode).not.toBe(127);
     });
 
-    it("should accept json-output option", async () => {
-      const result = await runCli([
+    it("should accept json-output option", () => {
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",
@@ -187,8 +187,8 @@ describe("Redocly Respect Integration Tests", () => {
       expect(result.exitCode).not.toBe(127);
     });
 
-    it("should accept har-output option", async () => {
-      const result = await runCli([
+    it("should accept har-output option", () => {
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",
@@ -200,8 +200,8 @@ describe("Redocly Respect Integration Tests", () => {
       expect(result.exitCode).not.toBe(127);
     });
 
-    it("should work with passthrough args", async () => {
-      const result = await runCli([
+    it("should work with passthrough args", () => {
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",
@@ -214,7 +214,7 @@ describe("Redocly Respect Integration Tests", () => {
       expect(result.exitCode).not.toBe(127);
     });
 
-    it("should respect --cwd flag", async () => {
+    it("should respect --cwd flag", () => {
       const subDir = path.join(tempDir, "subdir");
       fs.mkdirSync(subDir, { recursive: true });
 
@@ -224,7 +224,7 @@ describe("Redocly Respect Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "--cwd",
         subDir,
         "redocly",
@@ -246,8 +246,8 @@ describe("Redocly Respect Integration Tests", () => {
       );
     });
 
-    it("should reject workflow and skip used together", async () => {
-      const result = await runCli([
+    it("should reject workflow and skip used together", () => {
+      const result = runCli([
         "redocly",
         "respect",
         "arazzo/arazzo.yaml",

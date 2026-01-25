@@ -18,14 +18,14 @@ describe("Redocly Build-Docs Integration Tests", () => {
   });
 
   describe("OpenAPI documents", () => {
-    it("should build docs for simple valid spec with bundled default config", async () => {
+    it("should build docs for simple valid spec with bundled default config", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "build-docs",
         "openapi/openapi.yaml",
@@ -40,14 +40,14 @@ describe("Redocly Build-Docs Integration Tests", () => {
       expect(html).toContain("Simple Test API");
     });
 
-    it("should build docs for spec with references", async () => {
+    it("should build docs for spec with references", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/spec-with-refs"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "build-docs",
         "openapi/openapi.yaml",
@@ -63,7 +63,7 @@ describe("Redocly Build-Docs Integration Tests", () => {
       expect(html).toContain("TestSchema");
     });
 
-    it("should build docs when local redocly.yaml exists", async () => {
+    it("should build docs when local redocly.yaml exists", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -75,7 +75,7 @@ describe("Redocly Build-Docs Integration Tests", () => {
         path.join(tempDir, "redocly.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "build-docs",
         "openapi/openapi.yaml",
@@ -86,14 +86,14 @@ describe("Redocly Build-Docs Integration Tests", () => {
       expect(fs.existsSync("dist/docs/openapi.html")).toBe(true);
     });
 
-    it("should succeed even for invalid spec (build-docs doesn't validate)", async () => {
+    it("should succeed even for invalid spec (build-docs doesn't validate)", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/invalid/broken-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "build-docs",
         "openapi/openapi.yaml",
@@ -107,21 +107,21 @@ describe("Redocly Build-Docs Integration Tests", () => {
   });
 
   describe("default input handling", () => {
-    it("should use default input path when no argument provided", async () => {
+    it("should use default input path when no argument provided", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "build-docs", "--silent"]);
+      const result = runCli(["redocly", "build-docs", "--silent"]);
 
       expect(result.exitCode).toBe(0);
       expect(fs.existsSync("dist/docs/openapi.html")).toBe(true);
     });
 
-    it("should fail when no input provided and default doesn't exist", async () => {
-      const result = await runCli(["redocly", "build-docs", "--silent"]);
+    it("should fail when no input provided and default doesn't exist", () => {
+      const result = runCli(["redocly", "build-docs", "--silent"]);
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("no input document specified");
@@ -129,7 +129,7 @@ describe("Redocly Build-Docs Integration Tests", () => {
   });
 
   describe("custom options", () => {
-    it("should work with custom input path", async () => {
+    it("should work with custom input path", () => {
       fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
       fs.copyFileSync(
         path.join(
@@ -139,7 +139,7 @@ describe("Redocly Build-Docs Integration Tests", () => {
         path.join(tempDir, "custom/spec.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "build-docs",
         "custom/spec.yaml",
@@ -150,14 +150,14 @@ describe("Redocly Build-Docs Integration Tests", () => {
       expect(fs.existsSync("dist/docs/openapi.html")).toBe(true);
     });
 
-    it("should work with custom output path", async () => {
+    it("should work with custom output path", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "build-docs",
         "openapi/openapi.yaml",
@@ -171,7 +171,7 @@ describe("Redocly Build-Docs Integration Tests", () => {
       expect(fs.existsSync("dist/docs/openapi.html")).toBe(false);
     });
 
-    it("should work with custom config path", async () => {
+    it("should work with custom config path", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -183,7 +183,7 @@ describe("Redocly Build-Docs Integration Tests", () => {
         path.join(tempDir, "custom-redocly.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "build-docs",
         "openapi/openapi.yaml",
@@ -196,14 +196,14 @@ describe("Redocly Build-Docs Integration Tests", () => {
       expect(fs.existsSync("dist/docs/openapi.html")).toBe(true);
     });
 
-    it("should work with passthrough args", async () => {
+    it("should work with passthrough args", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "build-docs",
         "openapi/openapi.yaml",
@@ -220,7 +220,7 @@ describe("Redocly Build-Docs Integration Tests", () => {
       expect(html).toContain("Custom API Documentation");
     });
 
-    it("should respect --cwd flag", async () => {
+    it("should respect --cwd flag", () => {
       const subDir = path.join(tempDir, "subdir");
       fs.mkdirSync(subDir, { recursive: true });
 
@@ -230,7 +230,7 @@ describe("Redocly Build-Docs Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "--cwd",
         subDir,
         "redocly",

@@ -24,7 +24,7 @@ describe("Redocly Join Integration Tests", () => {
   });
 
   describe("OpenAPI documents", () => {
-    it("should join two valid OpenAPI documents", async () => {
+    it("should join two valid OpenAPI documents", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "api1"),
@@ -37,7 +37,7 @@ describe("Redocly Join Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "api1/openapi.yaml",
@@ -52,7 +52,7 @@ describe("Redocly Join Integration Tests", () => {
       expect(joined).toContain("openapi:");
     });
 
-    it("should join when local redocly.yaml exists", async () => {
+    it("should join when local redocly.yaml exists", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "api1"),
@@ -70,7 +70,7 @@ describe("Redocly Join Integration Tests", () => {
         path.join(tempDir, "redocly.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "api1/openapi.yaml",
@@ -84,14 +84,14 @@ describe("Redocly Join Integration Tests", () => {
   });
 
   describe("validation", () => {
-    it("should fail when less than 2 inputs provided", async () => {
+    it("should fail when less than 2 inputs provided", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "openapi/openapi.yaml",
@@ -102,7 +102,7 @@ describe("Redocly Join Integration Tests", () => {
       expect(result.stderr).toContain("requires at least 2 input documents");
     });
 
-    it("should fail when joining more than 2 inputs with conflicts", async () => {
+    it("should fail when joining more than 2 inputs with conflicts", () => {
       // create multiple copies of the same spec to induce conflicts
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
@@ -116,7 +116,7 @@ describe("Redocly Join Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "api1/openapi.yaml",
@@ -129,7 +129,7 @@ describe("Redocly Join Integration Tests", () => {
   });
 
   describe("prefix options", () => {
-    it("should work with prefix-components-with-info-prop", async () => {
+    it("should work with prefix-components-with-info-prop", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "api1"),
@@ -142,7 +142,7 @@ describe("Redocly Join Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "api1/openapi.yaml",
@@ -156,7 +156,7 @@ describe("Redocly Join Integration Tests", () => {
       expect(fs.existsSync("dist/join/openapi.yaml")).toBe(true);
     });
 
-    it("should work with prefix-tags-with-filename", async () => {
+    it("should work with prefix-tags-with-filename", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "api1"),
@@ -169,7 +169,7 @@ describe("Redocly Join Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "api1/openapi.yaml",
@@ -182,7 +182,7 @@ describe("Redocly Join Integration Tests", () => {
       expect(fs.existsSync("dist/join/openapi.yaml")).toBe(true);
     });
 
-    it("should work with without-x-tag-groups", async () => {
+    it("should work with without-x-tag-groups", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "api1"),
@@ -195,7 +195,7 @@ describe("Redocly Join Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "api1/openapi.yaml",
@@ -210,7 +210,7 @@ describe("Redocly Join Integration Tests", () => {
   });
 
   describe("custom options", () => {
-    it("should work with custom output path", async () => {
+    it("should work with custom output path", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "api1"),
@@ -223,7 +223,7 @@ describe("Redocly Join Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "api1/openapi.yaml",
@@ -237,7 +237,7 @@ describe("Redocly Join Integration Tests", () => {
       expect(fs.existsSync("custom/api.yaml")).toBe(true);
     });
 
-    it("should work with custom config path", async () => {
+    it("should work with custom config path", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "api1"),
@@ -255,7 +255,7 @@ describe("Redocly Join Integration Tests", () => {
         path.join(tempDir, "custom-redocly.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "api1/openapi.yaml",
@@ -269,7 +269,7 @@ describe("Redocly Join Integration Tests", () => {
       expect(fs.existsSync("dist/join/openapi.yaml")).toBe(true);
     });
 
-    it("should work with passthrough args", async () => {
+    it("should work with passthrough args", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "api1"),
@@ -282,7 +282,7 @@ describe("Redocly Join Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "api1/openapi.yaml",
@@ -297,7 +297,7 @@ describe("Redocly Join Integration Tests", () => {
       expect(fs.existsSync("dist/join/openapi.yaml")).toBe(true);
     });
 
-    it("should respect --cwd flag", async () => {
+    it("should respect --cwd flag", () => {
       const subDir = path.join(tempDir, "subdir");
       fs.mkdirSync(subDir, { recursive: true });
 
@@ -313,7 +313,7 @@ describe("Redocly Join Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "--cwd",
         subDir,
         "redocly",
@@ -331,7 +331,7 @@ describe("Redocly Join Integration Tests", () => {
   });
 
   describe("conflict handling", () => {
-    it("should reject conflicting prefix options", async () => {
+    it("should reject conflicting prefix options", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "api1"),
@@ -344,7 +344,7 @@ describe("Redocly Join Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "join",
         "api1/openapi.yaml",

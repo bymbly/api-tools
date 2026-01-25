@@ -1,13 +1,11 @@
-import { exec, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
-import { promisify } from "node:util";
 import { expect, vi } from "vitest";
 import {
   MultiInputExecuteParams,
   SingleInputExecuteParams,
 } from "../src/lib/cli/helpers.js";
 
-const execAsync = promisify(exec);
 const binPath = path.join(process.cwd(), "dist/bin/api-tools.js");
 
 type Stdio = "inherit" | "ignore";
@@ -46,18 +44,21 @@ export function getSpawnCall(expectedStdio: Stdio = "inherit"): SpawnCall {
   return { command, args, opts };
 }
 
-export async function runCli(args: string[]): Promise<{
+export function runCli(args: string[]): {
   stdout: string;
   stderr: string;
   exitCode: number;
-}> {
+} {
   const res = spawnSync(process.execPath, [binPath, ...args], {
     encoding: "utf-8",
+    timeout: 30_000,
   });
 
   return {
     stdout: res.stdout ?? "",
-    stderr: res.stderr ?? "",
+    stderr: res.error
+      ? (res.stderr ?? "") + String(res.error)
+      : (res.stderr ?? ""),
     exitCode: res.status ?? 1,
   };
 }
