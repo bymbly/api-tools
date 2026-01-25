@@ -3,7 +3,10 @@ import {
   CommandUnknownOpts,
   Option,
 } from "@commander-js/extra-typings";
-import { ExecuteParams, runMultiDocumentCommand } from "../cli/helpers.js";
+import {
+  runBatchInputCommand,
+  SingleInputExecuteParams,
+} from "../cli/helpers.js";
 import {
   DocTypeOptions,
   isQuiet,
@@ -59,7 +62,7 @@ function runLint(
   options: Options,
   cmd: CommandUnknownOpts,
 ): void {
-  runMultiDocumentCommand({
+  runBatchInputCommand({
     input,
     options,
     cmd,
@@ -68,7 +71,7 @@ function runLint(
   });
 }
 
-export function lint(params: ExecuteParams<Options>): number {
+export function lint(params: SingleInputExecuteParams<Options>): number {
   const { input, options, globals } = params;
 
   const config = resolveConfig(options.config);
@@ -112,7 +115,7 @@ Then re-run this command.
 }
 
 function buildArgs(
-  params: ExecuteParams<Options>,
+  params: SingleInputExecuteParams<Options>,
   config: ResolvedConfig,
 ): string[] {
   const { input, options, passthrough } = params;

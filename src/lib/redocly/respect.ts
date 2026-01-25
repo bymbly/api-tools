@@ -3,7 +3,10 @@ import {
   CommandUnknownOpts,
   Option,
 } from "@commander-js/extra-typings";
-import { ExecuteParams, runSingleDocumentCommand } from "../cli/helpers.js";
+import {
+  SingleInputExecuteParams,
+  runSingleInputCommand,
+} from "../cli/helpers.js";
 import { isQuiet, resolveStdio } from "../cli/runtime.js";
 import { run } from "./cli.js";
 
@@ -48,7 +51,7 @@ function runRespect(
   options: Options,
   cmd: CommandUnknownOpts,
 ): void {
-  runSingleDocumentCommand({
+  runSingleInputCommand({
     input,
     options,
     cmd,
@@ -57,7 +60,7 @@ function runRespect(
   });
 }
 
-export function respect(params: ExecuteParams<Options>): number {
+export function respect(params: SingleInputExecuteParams<Options>): number {
   const { input, options, globals } = params;
 
   const args = buildArgs(params);
@@ -87,7 +90,7 @@ export function respect(params: ExecuteParams<Options>): number {
   return run(args, stdio);
 }
 
-function buildArgs(params: ExecuteParams<Options>): string[] {
+function buildArgs(params: SingleInputExecuteParams<Options>): string[] {
   const { input, options, passthrough } = params;
 
   const args = ["respect", input];

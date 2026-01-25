@@ -1,5 +1,8 @@
 import { Command, CommandUnknownOpts } from "@commander-js/extra-typings";
-import { ExecuteParams, runSingleDocumentCommand } from "../cli/helpers.js";
+import {
+  SingleInputExecuteParams,
+  runSingleInputCommand,
+} from "../cli/helpers.js";
 import {
   ensureDirectoryExists,
   isQuiet,
@@ -30,7 +33,7 @@ function runGenerateArazzo(
   options: Options,
   cmd: CommandUnknownOpts,
 ): void {
-  runSingleDocumentCommand({
+  runSingleInputCommand({
     input,
     options,
     cmd,
@@ -39,7 +42,9 @@ function runGenerateArazzo(
   });
 }
 
-export function generateArazzo(params: ExecuteParams<Options>): number {
+export function generateArazzo(
+  params: SingleInputExecuteParams<Options>,
+): number {
   const { input, options, globals } = params;
 
   ensureDirectoryExists(options.output);
@@ -57,7 +62,7 @@ export function generateArazzo(params: ExecuteParams<Options>): number {
   return run(args, stdio);
 }
 
-function buildArgs(params: ExecuteParams<Options>): string[] {
+function buildArgs(params: SingleInputExecuteParams<Options>): string[] {
   const { input, options, passthrough } = params;
 
   const args = ["generate-arazzo", input, "--output-file", options.output];

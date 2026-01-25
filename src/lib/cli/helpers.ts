@@ -33,33 +33,55 @@ export function handleRawPassthrough(
 }
 
 export interface ExecuteParams<T> {
-  input: string;
   options: T;
   globals: GlobalOptions;
   passthrough: readonly string[];
 }
 
-export type Execute<T> = (params: ExecuteParams<T>) => number;
+export interface SingleInputExecuteParams<T> extends ExecuteParams<T> {
+  input: string;
+}
+
+export interface MultiInputExecuteParams<T> extends ExecuteParams<T> {
+  inputs: readonly string[];
+}
+
+export type ExecuteSingleInput<T> = (
+  params: SingleInputExecuteParams<T>,
+) => number;
+
+export type ExecuteMultiInput<T> = (
+  params: MultiInputExecuteParams<T>,
+) => number;
 
 export type ResolveDocuments<T> = (
   input: string | undefined,
   options: T,
 ) => ResolvedDocuments;
 
-export interface SingleDocumentRun<T> {
+export interface SingleInputCommand<T> {
   input: string | undefined;
   options: T;
   cmd: CommandUnknownOpts;
   defaultInput?: string;
-  execute: Execute<T>;
+  execute: ExecuteSingleInput<T>;
 }
 
-export interface MultiDocumentRun<T> extends SingleDocumentRun<T> {
+export interface BatchInputCommand<T> extends SingleInputCommand<T> {
   resolveDocuments: ResolveDocuments<T>;
 }
 
-export function runSingleDocumentCommand<T>(run: SingleDocumentRun<T>): void {
-  const ctx = getRunContext(run);
+export interface MultiInputCommand<T> {
+  inputs: readonly string[];
+  options: T;
+  cmd: CommandUnknownOpts;
+  minInputs: number;
+  maxInputs?: number;
+  execute: ExecuteMultiInput<T>;
+}
+
+export function runSingleInputCommand<T>(run: SingleInputCommand<T>): void {
+  const ctx = getSingleInputRunContext(run);
 
   // fallback to default input if ctx.input is undefined
   // this happens if commander treated first passthrough token as [input]
@@ -87,11 +109,11 @@ Provide an input path or run with --help for usage.
     return;
   }
 
-  processInputs(run, ctx, [one]);
+  processSingleInputs(run, ctx, [one]);
 }
 
-export function runMultiDocumentCommand<T>(run: MultiDocumentRun<T>): void {
-  const ctx = getRunContext(run);
+export function runBatchInputCommand<T>(run: BatchInputCommand<T>): void {
+  const ctx = getSingleInputRunContext(run);
 
   const resolved = run.resolveDocuments(ctx.input, run.options);
 
@@ -118,25 +140,81 @@ Provide an input path or create one of the above files and try again.
     return;
   }
 
-  processInputs(run, ctx, resolved.inputs);
+  processSingleInputs(run, ctx, resolved.inputs);
+}
+
+export function runMultiInputCommand<T>(run: MultiInputCommand<T>): void {
+  const ctx = getMultiInputRunContext(run);
+
+  if (ctx.inputs.length < run.minInputs) {
+    console.error(
+      `
+❌ Error: requires at least ${run.minInputs} input documents
+
+Provide input paths or run with --help for usage.
+`.trim(),
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (run.maxInputs && ctx.inputs.length > run.maxInputs) {
+    console.error(
+      `
+❌ Error: maximum ${run.maxInputs} inputs allowed
+
+Run with --help for usage.
+`.trim(),
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  process.exitCode = run.execute({
+    inputs: ctx.inputs,
+    options: run.options,
+    globals: ctx.globals,
+    passthrough: ctx.passthrough,
+  });
 }
 
 interface RunContext {
   globals: GlobalOptions;
-  input: string | undefined;
   passthrough: readonly string[];
 }
 
-function getRunContext<T>(run: SingleDocumentRun<T>): RunContext {
+interface SingleInputRunContext extends RunContext {
+  input: string | undefined;
+}
+
+interface MultiInputRunContext extends RunContext {
+  inputs: readonly string[];
+}
+
+function getSingleInputRunContext<T>(
+  run: SingleInputCommand<T>,
+): SingleInputRunContext {
   const globals = getGlobals(run.cmd);
   const [input, passthrough] = parsePassthrough(process.argv, run.input);
 
   return { globals, input, passthrough };
 }
 
-function processInputs<T>(
-  run: SingleDocumentRun<T>,
-  ctx: RunContext,
+function getMultiInputRunContext<T>(
+  run: MultiInputCommand<T>,
+): MultiInputRunContext {
+  const globals = getGlobals(run.cmd);
+  // for multi-input, we don't need to track individual inputs
+  // commander handles the positional args, we just need the passthrough args
+  const [, passthrough] = parsePassthrough(process.argv, undefined);
+  const inputs = run.inputs.filter((input) => input !== undefined);
+
+  return { globals, inputs, passthrough };
+}
+
+function processSingleInputs<T>(
+  run: SingleInputCommand<T>,
+  ctx: SingleInputRunContext,
   inputs: readonly string[],
 ): void {
   const results = inputs.map((docInput) => ({

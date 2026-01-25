@@ -3,7 +3,10 @@ import {
   CommandUnknownOpts,
   Option,
 } from "@commander-js/extra-typings";
-import { ExecuteParams, runSingleDocumentCommand } from "../cli/helpers.js";
+import {
+  runSingleInputCommand,
+  SingleInputExecuteParams,
+} from "../cli/helpers.js";
 import { isQuiet, ResolvedConfig, resolveStdio } from "../cli/runtime.js";
 import { resolveConfig, run } from "./cli.js";
 
@@ -47,7 +50,7 @@ function runBundle(
   options: Options,
   cmd: CommandUnknownOpts,
 ): void {
-  runSingleDocumentCommand({
+  runSingleInputCommand({
     input,
     options,
     cmd,
@@ -56,7 +59,7 @@ function runBundle(
   });
 }
 
-export function bundle(params: ExecuteParams<Options>): number {
+export function bundle(params: SingleInputExecuteParams<Options>): number {
   const { input, options, globals } = params;
 
   const config = resolveConfig(options.config);
@@ -78,7 +81,7 @@ export function bundle(params: ExecuteParams<Options>): number {
 }
 
 function buildArgs(
-  params: ExecuteParams<Options>,
+  params: SingleInputExecuteParams<Options>,
   config: ResolvedConfig,
 ): string[] {
   const { input, options, passthrough } = params;
