@@ -4,6 +4,7 @@ import { buildDocsCommand } from "./build-docs.js";
 import { bundleCommand } from "./bundle.js";
 import { run } from "./cli.js";
 import { generateArazzoCommand } from "./generate-arazzo.js";
+import { joinCommand } from "./join.js";
 import { lintCommand } from "./lint.js";
 import { respectCommand } from "./respect.js";
 
@@ -22,4 +23,5 @@ export const redoclyCommand = new Command("redocly")
   .addCommand(buildDocsCommand)
   .addCommand(bundleCommand)
   .addCommand(generateArazzoCommand)
-  .addCommand(respectCommand);
+  .addCommand(respectCommand)
+  .addCommand(joinCommand);
