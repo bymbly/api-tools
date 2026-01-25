@@ -10,7 +10,7 @@ import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
 
 vi.mock("node:child_process");
 
-const createRun = withDefaults<Options>("openapi/openapi.yaml", {
+const createRun = withDefaults<string, Options>("openapi/openapi.yaml", {
   output: "arazzo/auto-generated.arazzo.yaml",
 });
 
@@ -20,6 +20,8 @@ describe("Redocly Generate-Arazzo Functions", () => {
     vi.spyOn(console, "log").mockImplementation(vi.fn());
     vi.spyOn(console, "error").mockImplementation(vi.fn());
     vi.spyOn(fs, "readdirSync").mockReturnValue([]);
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "mkdirSync").mockImplementation(vi.fn());
     vi.mocked(spawnSync).mockReturnValue(okSpawnResult());
   });
 

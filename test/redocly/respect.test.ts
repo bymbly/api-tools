@@ -7,7 +7,7 @@ import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
 
 vi.mock("node:child_process");
 
-const createRun = withDefaults<Options>("arazzo/arazzo.yaml", {
+const createRun = withDefaults<string, Options>("arazzo/arazzo.yaml", {
   verbose: false,
 });
 

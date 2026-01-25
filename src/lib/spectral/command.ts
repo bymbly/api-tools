@@ -6,6 +6,10 @@ import { lintCommand } from "./lint.js";
 export const spectralCommand = new Command("spectral")
   .description("Spectral-related commands")
   .allowExcessArguments(true)
+  .configureHelp({
+    sortSubcommands: true,
+    sortOptions: true,
+  })
   .action((opts, cmd) => {
     handleRawPassthrough(opts, cmd, run);
   })

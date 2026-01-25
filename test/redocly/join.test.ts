@@ -1,8 +1,8 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bundle, Options } from "../../src/lib/redocly/bundle.js";
 import { run } from "../../src/lib/redocly/cli.js";
+import { join, Options } from "../../src/lib/redocly/join.js";
 import {
   getSpawnCall,
   mockDirent,
@@ -12,12 +12,16 @@ import {
 
 vi.mock("node:child_process");
 
-const createRun = withDefaults<string, Options>("openapi/openapi.yaml", {
-  output: "dist/bundle/openapi.yaml",
-  dereferenced: false,
-});
+const createRun = withDefaults<string[], Options>(
+  ["first.yaml", "second.yaml"],
+  {
+    output: "dist/joined/openapi.yaml",
+    prefixTagsWithFilename: false,
+    withoutXTagGroups: false,
+  },
+);
 
-describe("Redocly Bundle Functions", () => {
+describe("Redocly Join Functions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "log").mockImplementation(vi.fn());
@@ -33,7 +37,7 @@ describe("Redocly Bundle Functions", () => {
   describe("run", () => {
     it("should pass args directly to redocly", () => {
       const exitCode = run(
-        ["bundle", "spec.yaml", "--output", "bundle.yaml"],
+        ["join", "first.yaml", "second.yaml", "--output", "joined.yaml"],
         "inherit",
       );
 
@@ -41,10 +45,11 @@ describe("Redocly Bundle Functions", () => {
       const call = getSpawnCall("inherit");
       expect(call.args).toEqual(
         expect.arrayContaining([
-          "bundle",
-          "spec.yaml",
+          "join",
+          "first.yaml",
+          "second.yaml",
           "--output",
-          "bundle.yaml",
+          "joined.yaml",
         ]),
       );
     });
@@ -60,91 +65,95 @@ describe("Redocly Bundle Functions", () => {
         status: 2,
       });
 
-      const exitCode = run(["bundle", "bad.yaml"], "inherit");
+      const exitCode = run(["join", "bad.yaml", "worse.yaml"], "inherit");
       expect(exitCode).toBe(2);
     });
   });
 
-  describe("bundle", () => {
-    it("should use provided input", () => {
+  describe("join", () => {
+    it("should join multiple API documents", () => {
       const run = createRun();
 
-      expect(bundle(run)).toBe(0);
+      expect(join(run)).toBe(0);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).toContain("openapi/openapi.yaml");
-    });
-
-    it("should use custom input when provided", () => {
-      const run = createRun({ input: "custom/spec.yaml" });
-
-      bundle(run);
-
-      const call = getSpawnCall("inherit");
-      expect(call.args).toContain("custom/spec.yaml");
-    });
-
-    it("should use default output path", () => {
-      const run = createRun();
-
-      bundle(run);
-
-      const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--output");
-      expect(call.args).toContain("dist/bundle/openapi.yaml");
+      expect(call.args).toContain("join");
+      expect(call.args).toContain("first.yaml");
+      expect(call.args).toContain("second.yaml");
     });
 
     it("should use custom output when provided", () => {
-      const run = createRun({ options: { output: "custom/bundle.yaml" } });
+      const run = createRun({ options: { output: "custom/joined.yaml" } });
 
-      bundle(run);
+      join(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--output");
-      expect(call.args).toContain("custom/bundle.yaml");
+      expect(call.args).toContain("custom/joined.yaml");
     });
 
-    it("should pass ext option when provided", () => {
-      const run = createRun({ options: { ext: "json" } });
+    it("should pass prefix-components-with-info-prop option", () => {
+      const run = createRun({
+        options: { prefixComponentsWithInfoProp: "version" },
+      });
 
-      bundle(run);
+      join(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--ext");
-      expect(call.args).toContain("json");
+      expect(call.args).toContain("--prefix-components-with-info-prop");
+      expect(call.args).toContain("version");
     });
 
-    it("should not pass ext option when not provided", () => {
-      const run = createRun();
+    it("should pass prefix-tags-with-info-prop option", () => {
+      const run = createRun({ options: { prefixTagsWithInfoProp: "title" } });
 
-      bundle(run);
+      join(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).not.toContain("--ext");
+      expect(call.args).toContain("--prefix-tags-with-info-prop");
+      expect(call.args).toContain("title");
     });
 
-    it("should pass dereferenced flag when true", () => {
-      const run = createRun({ options: { dereferenced: true } });
+    it("should pass prefix-tags-with-filename flag when true", () => {
+      const run = createRun({ options: { prefixTagsWithFilename: true } });
 
-      bundle(run);
+      join(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--dereferenced");
+      expect(call.args).toContain("--prefix-tags-with-filename");
     });
 
-    it("should not pass dereferenced flag when false", () => {
-      const run = createRun({ options: { dereferenced: false } });
+    it("should not pass prefix-tags-with-filename flag when false", () => {
+      const run = createRun({ options: { prefixTagsWithFilename: false } });
 
-      bundle(run);
+      join(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).not.toContain("--dereferenced");
+      expect(call.args).not.toContain("--prefix-tags-with-filename");
+    });
+
+    it("should pass without-x-tag-groups flag when true", () => {
+      const run = createRun({ options: { withoutXTagGroups: true } });
+
+      join(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).toContain("--without-x-tag-groups");
+    });
+
+    it("should not pass without-x-tag-groups flag when false", () => {
+      const run = createRun({ options: { withoutXTagGroups: false } });
+
+      join(run);
+
+      const call = getSpawnCall("inherit");
+      expect(call.args).not.toContain("--without-x-tag-groups");
     });
 
     it("should use CLI-provided config when specified", () => {
       const run = createRun({ options: { config: "custom/redocly.yaml" } });
 
-      bundle(run);
+      join(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--config");
@@ -156,7 +165,7 @@ describe("Redocly Bundle Functions", () => {
 
       const run = createRun();
 
-      bundle(run);
+      join(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).not.toContain("--config");
@@ -165,7 +174,7 @@ describe("Redocly Bundle Functions", () => {
     it("should use bundled config when no local config", () => {
       const run = createRun();
 
-      bundle(run);
+      join(run);
 
       const call = getSpawnCall("inherit");
       const configIndex = call.args.indexOf("--config");
@@ -175,7 +184,7 @@ describe("Redocly Bundle Functions", () => {
     it("should use ignore stdio when globals.silent is true", () => {
       const run = createRun({ globals: { quiet: false, silent: true } });
 
-      bundle(run);
+      join(run);
       getSpawnCall("ignore");
     });
 
@@ -184,7 +193,7 @@ describe("Redocly Bundle Functions", () => {
 
       const run = createRun({ globals: { quiet: true, silent: false } });
 
-      bundle(run);
+      join(run);
 
       expect(logSpy).not.toHaveBeenCalled();
     });
@@ -194,40 +203,56 @@ describe("Redocly Bundle Functions", () => {
 
       const run = createRun({ globals: { quiet: false, silent: false } });
 
-      bundle(run);
+      join(run);
 
       expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Redocly bundle"),
+        expect.stringContaining("Redocly join"),
       );
     });
 
-    it("should log extension when provided", () => {
+    it("should log all inputs", () => {
       const logSpy = vi.spyOn(console, "log");
 
       const run = createRun({
+        inputs: ["first.yaml", "second.yaml", "third.yaml"],
         globals: { quiet: false, silent: false },
-        options: { ext: "json" },
       });
 
-      bundle(run);
+      join(run);
 
       expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Extension: json"),
+        expect.stringContaining("Inputs: first.yaml, second.yaml, third.yaml"),
+      );
+    });
+
+    it("should log output when provided", () => {
+      const logSpy = vi.spyOn(console, "log");
+
+      const run = createRun({
+        options: { output: "custom/output.yaml" },
+        globals: { quiet: false, silent: false },
+      });
+
+      join(run);
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Output: custom/output.yaml"),
       );
     });
 
     it("should forward passthrough args to redocly", () => {
       const run = createRun({
-        passthrough: ["--remove-unused-components"],
+        passthrough: ["--lint-config", "error"],
       });
 
-      bundle(run);
+      join(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--remove-unused-components");
+      expect(call.args).toContain("--lint-config");
+      expect(call.args).toContain("error");
     });
 
-    it("should return non-zero exit code on bundle failure", () => {
+    it("should return non-zero exit code on join failure", () => {
       vi.mocked(spawnSync).mockReturnValue({
         ...okSpawnResult(),
         status: 1,
@@ -235,7 +260,7 @@ describe("Redocly Bundle Functions", () => {
 
       const run = createRun();
 
-      expect(bundle(run)).toBe(1);
+      expect(join(run)).toBe(1);
     });
 
     it("should throw when spawnSync errors", () => {
@@ -246,7 +271,7 @@ describe("Redocly Bundle Functions", () => {
 
       const run = createRun();
 
-      expect(() => bundle(run)).toThrow("spawn failed");
+      expect(() => join(run)).toThrow("spawn failed");
     });
   });
 });

@@ -1,5 +1,8 @@
 import { Command, CommandUnknownOpts } from "@commander-js/extra-typings";
-import { ExecuteParams, runSingleDocumentCommand } from "../cli/helpers.js";
+import {
+  runSingleInputCommand,
+  SingleInputExecuteParams,
+} from "../cli/helpers.js";
 import { isQuiet, ResolvedConfig, resolveStdio } from "../cli/runtime.js";
 import { resolveConfig, run } from "./cli.js";
 
@@ -22,7 +25,7 @@ function runBuildDocs(
   options: Options,
   cmd: CommandUnknownOpts,
 ): void {
-  runSingleDocumentCommand({
+  runSingleInputCommand({
     input,
     options,
     cmd,
@@ -31,7 +34,7 @@ function runBuildDocs(
   });
 }
 
-export function buildDocs(params: ExecuteParams<Options>): number {
+export function buildDocs(params: SingleInputExecuteParams<Options>): number {
   const { input, options, globals } = params;
 
   const config = resolveConfig(options.config);
@@ -50,7 +53,7 @@ export function buildDocs(params: ExecuteParams<Options>): number {
 }
 
 function buildArgs(
-  params: ExecuteParams<Options>,
+  params: SingleInputExecuteParams<Options>,
   config: ResolvedConfig,
 ): string[] {
   const { input, options, passthrough } = params;

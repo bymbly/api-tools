@@ -18,14 +18,14 @@ describe("Redocly Bundle Integration Tests", () => {
   });
 
   describe("OpenAPI documents", () => {
-    it("should bundle simple spec with bundled default config", async () => {
+    it("should bundle simple spec with bundled default config", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "openapi/openapi.yaml",
@@ -40,14 +40,14 @@ describe("Redocly Bundle Integration Tests", () => {
       expect(bundled).toContain("Simple Test API");
     });
 
-    it("should bundle spec with references", async () => {
+    it("should bundle spec with references", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/spec-with-refs"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "openapi/openapi.yaml",
@@ -63,7 +63,7 @@ describe("Redocly Bundle Integration Tests", () => {
       expect(bundled).toContain("TestSchema");
     });
 
-    it("should bundle when local redocly.yaml exists", async () => {
+    it("should bundle when local redocly.yaml exists", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -75,7 +75,7 @@ describe("Redocly Bundle Integration Tests", () => {
         path.join(tempDir, "redocly.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "openapi/openapi.yaml",
@@ -86,14 +86,14 @@ describe("Redocly Bundle Integration Tests", () => {
       expect(fs.existsSync("dist/bundle/openapi.yaml")).toBe(true);
     });
 
-    it("should succeed even for invalid spec (bundle doesn't validate)", async () => {
+    it("should succeed even for invalid spec (bundle doesn't validate)", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/invalid/broken-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "openapi/openapi.yaml",
@@ -107,21 +107,21 @@ describe("Redocly Bundle Integration Tests", () => {
   });
 
   describe("default input handling", () => {
-    it("should use default input path when no argument provided", async () => {
+    it("should use default input path when no argument provided", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli(["redocly", "bundle", "--silent"]);
+      const result = runCli(["redocly", "bundle", "--silent"]);
 
       expect(result.exitCode).toBe(0);
       expect(fs.existsSync("dist/bundle/openapi.yaml")).toBe(true);
     });
 
-    it("should fail when no input provided and default doesn't exist", async () => {
-      const result = await runCli(["redocly", "bundle", "--silent"]);
+    it("should fail when no input provided and default doesn't exist", () => {
+      const result = runCli(["redocly", "bundle", "--silent"]);
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("no input document specified");
@@ -129,14 +129,14 @@ describe("Redocly Bundle Integration Tests", () => {
   });
 
   describe("output options", () => {
-    it("should work with custom output path", async () => {
+    it("should work with custom output path", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "openapi/openapi.yaml",
@@ -150,14 +150,14 @@ describe("Redocly Bundle Integration Tests", () => {
       expect(fs.existsSync("dist/bundle/openapi.yaml")).toBe(false);
     });
 
-    it("should bundle to JSON with --ext json", async () => {
+    it("should bundle to JSON with --ext json", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "openapi/openapi.yaml",
@@ -173,14 +173,14 @@ describe("Redocly Bundle Integration Tests", () => {
       expect(() => JSON.parse(bundled) as unknown).not.toThrow();
     });
 
-    it("should override output extension with --ext", async () => {
+    it("should override output extension with --ext", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "openapi/openapi.yaml",
@@ -198,14 +198,14 @@ describe("Redocly Bundle Integration Tests", () => {
   });
 
   describe("dereferenced bundles", () => {
-    it("should create fully dereferenced bundle", async () => {
+    it("should create fully dereferenced bundle", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/spec-with-refs"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "openapi/openapi.yaml",
@@ -224,7 +224,7 @@ describe("Redocly Bundle Integration Tests", () => {
   });
 
   describe("custom options", () => {
-    it("should work with custom input path", async () => {
+    it("should work with custom input path", () => {
       fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
       fs.copyFileSync(
         path.join(
@@ -234,7 +234,7 @@ describe("Redocly Bundle Integration Tests", () => {
         path.join(tempDir, "custom/spec.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "custom/spec.yaml",
@@ -245,7 +245,7 @@ describe("Redocly Bundle Integration Tests", () => {
       expect(fs.existsSync("dist/bundle/openapi.yaml")).toBe(true);
     });
 
-    it("should work with custom config path", async () => {
+    it("should work with custom config path", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/simple-spec"),
         path.join(tempDir, "openapi"),
@@ -257,7 +257,7 @@ describe("Redocly Bundle Integration Tests", () => {
         path.join(tempDir, "custom-redocly.yaml"),
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "openapi/openapi.yaml",
@@ -270,14 +270,14 @@ describe("Redocly Bundle Integration Tests", () => {
       expect(fs.existsSync("dist/bundle/openapi.yaml")).toBe(true);
     });
 
-    it("should work with passthrough args", async () => {
+    it("should work with passthrough args", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/openapi/valid/spec-with-refs"),
         path.join(tempDir, "openapi"),
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "redocly",
         "bundle",
         "openapi/openapi.yaml",
@@ -290,7 +290,7 @@ describe("Redocly Bundle Integration Tests", () => {
       expect(fs.existsSync("dist/bundle/openapi.yaml")).toBe(true);
     });
 
-    it("should respect --cwd flag", async () => {
+    it("should respect --cwd flag", () => {
       const subDir = path.join(tempDir, "subdir");
       fs.mkdirSync(subDir, { recursive: true });
 
@@ -300,7 +300,7 @@ describe("Redocly Bundle Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = await runCli([
+      const result = runCli([
         "--cwd",
         subDir,
         "redocly",

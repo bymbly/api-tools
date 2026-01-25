@@ -51,6 +51,7 @@ Add scripts to your `package.json`:
     "lint:spectral": "api-tools spectral lint",
     "lint:redocly": "api-tools redocly lint",
     "bundle": "api-tools redocly bundle",
+    "join": "api-tools redocly join",
     "docs": "api-tools redocly build-docs",
     "arazzo:gen": "api-tools redocly generate-arazzo",
     "test:api": "api-tools redocly respect"
@@ -62,7 +63,8 @@ Run:
 
 ```bash
 npm run lint        # Lint with both Spectral and Redocly
-npm run bundle      # Bundle OpenAPI spec
+npm run bundle      # Bundle OpenAPI documents
+npm run join        # Join OpenAPI documents
 npm run docs        # Generate HTML documentation
 npm run arazzo:gen  # Generate Arazzo workflow starter
 npm run test:api    # Execute Arazzo workflow tests
@@ -213,6 +215,11 @@ api-tools redocly build-docs -- --title "My API Documentation"
 
 Bundle API descriptions into a single file.
 
+> **Note:** The `bundle` command differs from the `join` command.
+> The `bundle` command takes a root OpenAPI file as input and follows the `$ref` mentions to include
+> all the referenced components into a single output file. The `join` command can combine multiple
+> OpenAPI files into a single unified API description file.
+
 **Usage:**
 
 ```bash
@@ -245,6 +252,65 @@ api-tools redocly bundle --output dist/api-bundle.yaml
 
 # Remove unused components via passthrough
 api-tools redocly bundle -- --remove-unused-components
+```
+
+#### `redocly join`
+
+Join multiple OpenAPI 3.x documents into a single file.
+
+> **Note:** The `join` command differs from the `bundle` command.
+> The `bundle` command takes a root OpenAPI file as input and follows the `$ref` mentions to include
+> all the referenced components into a single output file. The `join` command can combine multiple
+> OpenAPI files into a single unified API description file.
+> Unlike the `bundle` command, `join` does not execute preprocessors or decorators and combines the
+> API description files as-is without modifying the original source files.
+
+**Usage:**
+
+```bash
+api-tools redocly join <inputs...> [options]
+```
+
+**Options:**
+
+- `<inputs...>` - **REQUIRED.** At least 2 document paths to join
+- `--output <file>` - Output file path (default: `dist/join/openapi.yaml`)
+- `--prefix-components-with-info-prop <property>` - Prefix component names with info property to
+  resolve conflicts (e.g., `version`, `title`)
+- `--prefix-tags-with-info-prop <property>` - Prefix tag names with info property (e.g., `title`, `version`)
+- `--prefix-tags-with-filename` - Prefix tag names with filename to resolve conflicts
+- `--without-x-tag-groups` - Skip automated `x-tagGroups` creation (avoids tag duplication)
+- `--config <file>` - Config file path (overrides auto/bundled)
+
+> **Note:** The options `--prefix-tags-with-info-prop`, `--prefix-tags-with-filename`, and
+> `--without-x-tag-groups` are mutually exclusive.
+
+**Examples:**
+
+```bash
+# Join two documents
+api-tools redocly join api-1.yaml api-2.yaml
+
+# Join with custom output
+api-tools redocly join users-api.yaml orders-api.yaml --output dist/combined-api.yaml
+
+# Resolve component naming conflicts using version
+api-tools redocly join museum-v1.yaml museum-v2.yaml \
+  --prefix-components-with-info-prop version
+
+# Prefix tags with title to avoid conflicts
+api-tools redocly join first-api.yaml second-api.yaml \
+  --prefix-tags-with-info-prop title
+
+# Prefix tags with filename
+api-tools redocly join api1/openapi.yaml api2/openapi.yaml \
+  --prefix-tags-with-filename
+
+# Skip x-tagGroups for duplicate tags
+api-tools redocly join api-a.yaml api-b.yaml --without-x-tag-groups
+
+# Advanced passthrough options
+api-tools redocly join *.yaml -- --lint-config error
 ```
 
 #### `redocly generate-arazzo`
@@ -341,6 +407,8 @@ project/
 └── dist/
     ├── bundle/
     │   └── openapi.yaml    # Bundled output
+    ├── join/
+    │   └── openapi.yaml    # Joined output
     └── docs/
         └── openapi.html    # Generated docs
 ```
@@ -448,8 +516,11 @@ jobs:
 ### Development
 
 ```bash
-# Lint during development
+# Lint using Spectral during development
 api-tools spectral lint --openapi
+
+# Lint using Redocly during development
+api-tools redocly lint --openapi
 
 # Generate docs for local preview
 api-tools redocly build-docs
@@ -467,7 +538,7 @@ api-tools redocly lint
 
 ```bash
 # Full validation with outputs
-api-tools spectral lint --format json --output spectral-results.json
+api-tools spectral lint --format github-actions
 api-tools redocly lint --format github-actions
 api-tools redocly bundle --output dist/openapi.yaml
 api-tools redocly build-docs --output dist/api-docs.html

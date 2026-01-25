@@ -18,17 +18,17 @@ security:
   - BearerToken: []
 
 tags:
-  - name: Example Tag
-    description: An example tag
+  - name: Test API with References Example Tag
+    description: A test API with references example tag
 
 paths:
-  /test:
+  /references-test:
     get:
-      operationId: getTest
+      operationId: getReferencesTest
       summary: Test endpoint
       description: A simple test endpoint
       tags:
-        - Example Tag
+        - Test API with References Example Tag
       responses:
         "200":
           description: Success

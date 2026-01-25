@@ -12,6 +12,10 @@ export function buildProgram() {
   return new Command()
     .name("api-tools")
     .description("Unified API tooling")
+    .configureHelp({
+      sortSubcommands: true,
+      sortOptions: true,
+    })
     .option(
       "--quiet",
       "Disable wrapper logging (still shows underlying CLI output)",
