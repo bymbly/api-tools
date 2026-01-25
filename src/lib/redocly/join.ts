@@ -21,7 +21,7 @@ export interface Options {
 
 export const joinCommand = new Command("join")
   .description("Join multiple OpenAPI 3.x documents into a single file")
-  .argument("<apis...>", "API documents to join (at least 2 required)")
+  .argument("<inputs...>", "Documents to join (at least 2 required)")
 
   .option(
     "--output <file>",
