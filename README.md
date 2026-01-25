@@ -9,6 +9,10 @@ customization through CLI options and passthrough arguments.
 
 **Wraps:** [Redocly](https://github.com/Redocly/redocly-cli) | [Spectral](https://github.com/stoplightio/spectral)
 
+[![API Tools](https://github.com/bymbly/api-tools/actions/workflows/workflow.yaml/badge.svg)](https://github.com/bymbly/api-tools/actions/workflows/workflow.yaml)
+![NPM Version](https://img.shields.io/npm/v/@bymbly/api-tools)
+![NPM License](https://img.shields.io/npm/l/@bymbly/api-tools)
+
 ## Features
 
 - **Single unified CLI** - One tool for all API spec operations
@@ -17,6 +21,47 @@ customization through CLI options and passthrough arguments.
 - **Flexible overrides** - CLI options for common cases, passthrough for advanced use
 - **Bundled configs** - Default Spectral and Redocly configuration included
 - **Auto-detection** - Finds OpenAPI, AsyncAPI, and Arazzo specs automatically
+
+## Table of Contents
+
+- [@bymbly/api-tools](#bymblyapi-tools)
+  - [Features](#features)
+  - [Table of Contents](#table-of-contents)
+  - [Installation](#installation)
+  - [Quick Start](#quick-start)
+  - [Command Structure](#command-structure)
+    - [Global Options](#global-options)
+  - [Commands](#commands)
+    - [Spectral Commands](#spectral-commands)
+      - [`spectral lint`](#spectral-lint)
+      - [`spectral init`](#spectral-init)
+    - [Redocly Commands](#redocly-commands)
+      - [`redocly lint`](#redocly-lint)
+      - [`redocly build-docs`](#redocly-build-docs)
+      - [`redocly bundle`](#redocly-bundle)
+      - [`redocly join`](#redocly-join)
+      - [`redocly generate-arazzo`](#redocly-generate-arazzo)
+      - [`redocly respect`](#redocly-respect)
+      - [`redocly init`](#redocly-init)
+  - [Default File Locations](#default-file-locations)
+  - [Configuration Files](#configuration-files)
+    - [Auto-Discovery](#auto-discovery)
+    - [Bundled Defaults](#bundled-defaults)
+    - [Custom Configs](#custom-configs)
+  - [Passthrough Arguments](#passthrough-arguments)
+  - [CI/CD Integration](#cicd-integration)
+    - [GitHub Actions Example](#github-actions-example)
+  - [Common Workflows](#common-workflows)
+    - [Development](#development)
+    - [Pre-commit](#pre-commit)
+    - [CI Pipeline](#ci-pipeline)
+    - [API Testing](#api-testing)
+  - [Troubleshooting](#troubleshooting)
+    - [Command not found](#command-not-found)
+    - [Config not found](#config-not-found)
+    - [Bundled config issues](#bundled-config-issues)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Installation
 
