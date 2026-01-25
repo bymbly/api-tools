@@ -18,17 +18,17 @@ security:
   - BearerToken: []
 
 tags:
-  - name: Example Tag
-    description: An example tag
+  - name: Simple Test Example Tag
+    description: A simple test example tag
 
 paths:
-  /test:
+  /simple-test:
     get:
-      operationId: getTest
+      operationId: getSimpleTest
       summary: Test endpoint
       description: A simple test endpoint
       tags:
-        - Example Tag
+        - Simple Test Example Tag
       responses:
         "200":
           description: Success
