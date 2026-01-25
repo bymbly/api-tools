@@ -1,8 +1,11 @@
-import { exec, ExecException, spawnSync } from "node:child_process";
+import { exec, spawnSync } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
 import { expect, vi } from "vitest";
-import { ExecuteParams } from "../src/lib/cli/helpers.js";
+import {
+  MultiInputExecuteParams,
+  SingleInputExecuteParams,
+} from "../src/lib/cli/helpers.js";
 
 const execAsync = promisify(exec);
 const binPath = path.join(process.cwd(), "dist/bin/api-tools.js");
@@ -48,53 +51,54 @@ export async function runCli(args: string[]): Promise<{
   stderr: string;
   exitCode: number;
 }> {
-  try {
-    const { stdout, stderr } = await execAsync(
-      `node ${binPath} ${args.join(" ")}`,
-    );
-    return { stdout, stderr, exitCode: 0 };
-  } catch (error) {
-    if (isExecException(error)) {
-      return {
-        stdout: error.stdout ?? "",
-        stderr: error.stderr ?? "",
-        exitCode: error.code ?? 1,
-      };
-    }
-    throw error;
-  }
+  const res = spawnSync(process.execPath, [binPath, ...args], {
+    encoding: "utf-8",
+  });
+
+  return {
+    stdout: res.stdout ?? "",
+    stderr: res.stderr ?? "",
+    exitCode: res.status ?? 1,
+  };
 }
 
-export function isExecException(error: unknown): error is ExecException {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    "stdout" in error &&
-    "stderr" in error
-  );
-}
-
-export type Overrides<T> = Omit<
-  Partial<ExecuteParams<Partial<T>>>,
+type Override<Params extends { options: any }> = Omit<
+  Partial<Params>,
   "options"
-> & {
-  options?: Partial<T>;
-};
+> & { options?: Partial<Params["options"]> };
 
-export function withDefaults<T>(defaultInput: string, defaultOptions: T) {
-  return function createRun(overrides: Overrides<T> = {}): ExecuteParams<T> {
-    return {
-      input: defaultInput,
+type SingleInputOverrides<T> = Override<SingleInputExecuteParams<T>>;
+type MultiInputOverrides<T> = Override<MultiInputExecuteParams<T>>;
+
+type Overrides<I, T> = I extends string
+  ? (overrides?: SingleInputOverrides<T>) => SingleInputExecuteParams<T>
+  : (overrides?: MultiInputOverrides<T>) => MultiInputExecuteParams<T>;
+
+export function withDefaults<I extends string | readonly string[], T>(
+  defaultInput: I,
+  defaultOptions: T,
+): Overrides<I, T> {
+  return ((overrides: unknown = {}) => {
+    const o = (overrides ?? {}) as {
+      options?: Partial<T>;
+      input?: string;
+      inputs?: readonly string[];
+    };
+
+    const options = { ...defaultOptions, ...(o.options ?? {}) };
+    const base = {
       globals: { quiet: false, silent: false },
       passthrough: [],
-      ...overrides,
-      options: {
-        ...defaultOptions,
-        ...overrides.options,
-      } as T,
+      ...(o as object),
+      options,
     };
-  };
+
+    if (typeof defaultInput === "string") {
+      return { ...base, input: o.input ?? defaultInput };
+    }
+
+    return { ...base, inputs: o.inputs ?? defaultInput };
+  }) as Overrides<I, T>;
 }
 
 export function mockDirent(filename: string) {

@@ -10,7 +10,7 @@ import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
 
 vi.mock("node:child_process");
 
-const createRun = withDefaults<Options>("openapi/openapi.yaml", {
+const createRun = withDefaults<string, Options>("openapi/openapi.yaml", {
   output: "arazzo/auto-generated.arazzo.yaml",
 });
 
