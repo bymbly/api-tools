@@ -20,6 +20,8 @@ describe("Redocly Generate-Arazzo Functions", () => {
     vi.spyOn(console, "log").mockImplementation(vi.fn());
     vi.spyOn(console, "error").mockImplementation(vi.fn());
     vi.spyOn(fs, "readdirSync").mockReturnValue([]);
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "mkdirSync").mockImplementation(vi.fn());
     vi.mocked(spawnSync).mockReturnValue(okSpawnResult());
   });
 
