@@ -55,15 +55,13 @@ export function runCli(args: string[]): {
   });
 
   return {
-    stdout: res.stdout ?? "",
-    stderr: res.error
-      ? (res.stderr ?? "") + String(res.error)
-      : (res.stderr ?? ""),
+    stdout: res.stdout,
+    stderr: res.error ? res.stderr + String(res.error) : res.stderr,
     exitCode: res.status ?? 1,
   };
 }
 
-type Override<Params extends { options: any }> = Omit<
+type Override<Params extends { options: unknown }> = Omit<
   Partial<Params>,
   "options"
 > & { options?: Partial<Params["options"]> };

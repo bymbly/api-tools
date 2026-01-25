@@ -149,7 +149,7 @@ export function runMultiInputCommand<T>(run: MultiInputCommand<T>): void {
   if (ctx.inputs.length < run.minInputs) {
     console.error(
       `
-❌ Error: requires at least ${run.minInputs} input documents
+❌ Error: requires at least ${String(run.minInputs)} input documents
 
 Provide input paths or run with --help for usage.
 `.trim(),
@@ -161,7 +161,7 @@ Provide input paths or run with --help for usage.
   if (run.maxInputs && ctx.inputs.length > run.maxInputs) {
     console.error(
       `
-❌ Error: maximum ${run.maxInputs} inputs allowed
+❌ Error: maximum ${String(run.maxInputs)} inputs allowed
 
 Run with --help for usage.
 `.trim(),
@@ -204,10 +204,10 @@ function getMultiInputRunContext<T>(
   run: MultiInputCommand<T>,
 ): MultiInputRunContext {
   const globals = getGlobals(run.cmd);
+  const inputs = run.inputs;
   // for multi-input, we don't need to track individual inputs
   // commander handles the positional args, we just need the passthrough args
   const [, passthrough] = parsePassthrough(process.argv, undefined);
-  const inputs = run.inputs.filter((input) => input !== undefined);
 
   return { globals, inputs, passthrough };
 }
