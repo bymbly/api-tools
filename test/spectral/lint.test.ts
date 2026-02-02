@@ -13,7 +13,7 @@ import {
 
 vi.mock("node:child_process");
 
-const createRun = withDefaults<Options>("openapi/openapi.yaml", {
+const createRun = withDefaults<string, Options>("openapi/openapi.yaml", {
   format: "stylish",
   failSeverity: "warn",
   displayOnlyFailures: false,
