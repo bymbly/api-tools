@@ -146,7 +146,7 @@ describe("AsyncAPI Bundle Functions", () => {
       bundle(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--x-origin");
+      expect(call.args).toContain("--xOrigin");
     });
 
     it("should not pass x-origin flag when false", () => {
