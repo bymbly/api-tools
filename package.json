@@ -49,6 +49,7 @@
     "copy:defaults": "mkdir -p dist/defaults && cp -a defaults/. dist/defaults/"
   },
   "dependencies": {
+    "@asyncapi/cli": "^5.0.6",
     "@commander-js/extra-typings": "14.0.0",
     "@redocly/cli": "2.15.0",
     "@stoplight/spectral-cli": "6.15.0"
