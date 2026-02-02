@@ -41,7 +41,7 @@ export const bundleCommand = new Command("bundle")
     ).choices([...VALID_EXTENSIONS]),
   )
   .option(
-    "--xOrigin",
+    "--x-origin",
     "Generate x-origin fields that contain historical values of dereferenced $ref's",
     false,
   )

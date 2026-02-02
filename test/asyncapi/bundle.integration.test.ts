@@ -166,7 +166,7 @@ describe("AsyncAPI Bundle Integration Tests", () => {
         "asyncapi",
         "bundle",
         "asyncapi/asyncapi.yaml",
-        "--xOrigin",
+        "--x-origin",
         "--silent",
       ]);
 
