@@ -1,0 +1,13 @@
+UserSignedUp:
+  payload:
+    type: object
+    properties:
+      userId:
+        type: string
+        description: User's unique identifier
+      email:
+        type: string
+        format: email
+    required:
+      - userId
+      - email
