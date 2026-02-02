@@ -155,7 +155,7 @@ describe("AsyncAPI Bundle Functions", () => {
       bundle(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).not.toContain("--x-origin");
+      expect(call.args).not.toContain("--xOrigin");
     });
 
     it("should use ignore stdio when globals.silent is true", () => {
