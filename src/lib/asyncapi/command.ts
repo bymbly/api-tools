@@ -1,5 +1,6 @@
 import { Command } from "@commander-js/extra-typings";
 import { handleRawPassthrough } from "../cli/helpers.js";
+import { bundleCommand } from "./bundle.js";
 import { run } from "./cli.js";
 import { validateCommand } from "./validate.js";
 
@@ -13,4 +14,5 @@ export const asyncapiCommand = new Command("asyncapi")
   .action((opts, cmd) => {
     handleRawPassthrough(opts, cmd, run);
   })
-  .addCommand(validateCommand);
+  .addCommand(validateCommand)
+  .addCommand(bundleCommand);
