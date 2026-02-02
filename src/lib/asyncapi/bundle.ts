@@ -76,7 +76,9 @@ export function bundle(params: SingleInputExecuteParams<Options>): number {
     if (options.ext) {
       console.log(`   Extension: ${options.ext}`);
     }
-    console.log(`   xOrigin: ${options.xOrigin}`);
+    if (options.xOrigin) {
+      console.log(`   x-origin: true`);
+    }
   }
 
   return run(args, stdio);
