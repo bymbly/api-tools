@@ -65,6 +65,8 @@ function runBundle(
 export function bundle(params: SingleInputExecuteParams<Options>): number {
   const { input, options, globals } = params;
 
+  ensureDirectoryExists(options.output);
+
   const args = buildArgs(params);
   const stdio = resolveStdio(globals);
   const quiet = isQuiet(globals);
@@ -86,8 +88,6 @@ export function bundle(params: SingleInputExecuteParams<Options>): number {
 
 function buildArgs(params: SingleInputExecuteParams<Options>) {
   const { input, options, passthrough } = params;
-
-  ensureDirectoryExists(options.output);
 
   let outputPath = options.output;
   if (options.ext) {
