@@ -230,3 +230,4 @@ dist
 ###
 # Project Specific (add your custom ignores here)
 ###
+test-temp-*/
