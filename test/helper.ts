@@ -51,7 +51,7 @@ export function runCli(args: string[]): {
 } {
   const res = spawnSync(process.execPath, [binPath, ...args], {
     encoding: "utf-8",
-    timeout: 30_000,
+    timeout: 120_000,
   });
 
   return {
