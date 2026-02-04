@@ -90,7 +90,7 @@ function buildArgs(params: SingleInputExecuteParams<Options>) {
     args.push("--format", options.ext);
   }
 
-  // forward any passthrough args to spectral
+  // forward any passthrough args
   if (passthrough.length > 0) {
     args.push(...passthrough);
   }
