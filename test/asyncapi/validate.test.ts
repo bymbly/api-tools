@@ -1,31 +1,21 @@
 import { spawnSync } from "node:child_process";
-import fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { run } from "../../src/lib/spectral/cli.js";
-import type { Options } from "../../src/lib/spectral/lint.js";
-import { lint } from "../../src/lib/spectral/lint.js";
-import {
-  getSpawnCall,
-  mockDirent,
-  okSpawnResult,
-  withDefaults,
-} from "../helper.js";
+import { run } from "../../src/lib/asyncapi/cli.js";
+import { Options, validate } from "../../src/lib/asyncapi/validate.js";
+import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
 
 vi.mock("node:child_process");
 
-const createRun = withDefaults<string, Options>("openapi/openapi.yaml", {
+const createRun = withDefaults<string, Options>("asyncapi/asyncapi.yaml", {
   format: "stylish",
   failSeverity: "warn",
-  displayOnlyFailures: false,
-  verbose: false,
 });
 
-describe("Spectral Lint Functions", () => {
+describe("AsyncAPI Validate Functions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "log").mockImplementation(vi.fn());
     vi.spyOn(console, "error").mockImplementation(vi.fn());
-    vi.spyOn(fs, "readdirSync").mockReturnValue([]);
     vi.mocked(spawnSync).mockReturnValue(okSpawnResult());
   });
 
@@ -34,16 +24,21 @@ describe("Spectral Lint Functions", () => {
   });
 
   describe("run", () => {
-    it("should pass args directly to spectral", () => {
+    it("should pass args directly to asyncapi cli", () => {
       const exitCode = run(
-        ["lint", "spec.yaml", "--format", "json"],
+        ["validate", "spec.yaml", "--diagnostics-format", "json"],
         "inherit",
       );
 
       expect(exitCode).toBe(0);
       const call = getSpawnCall("inherit");
       expect(call.args).toEqual(
-        expect.arrayContaining(["lint", "spec.yaml", "--format", "json"]),
+        expect.arrayContaining([
+          "validate",
+          "spec.yaml",
+          "--diagnostics-format",
+          "json",
+        ]),
       );
     });
 
@@ -58,126 +53,83 @@ describe("Spectral Lint Functions", () => {
         status: 2,
       });
 
-      const exitCode = run(["lint", "bad.yaml"], "inherit");
+      const exitCode = run(["validate", "bad.yaml"], "inherit");
       expect(exitCode).toBe(2);
     });
   });
 
-  describe("lint", () => {
+  describe("validate", () => {
     it("should use provided input", () => {
       const run = createRun();
 
-      expect(lint(run)).toBe(0);
+      expect(validate(run)).toBe(0);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).toContain("openapi/openapi.yaml");
+      expect(call.args).toContain("asyncapi/asyncapi.yaml");
     });
 
     it("should use custom input when provided", () => {
       const run = createRun({ input: "custom/spec.yaml" });
 
-      lint(run);
+      validate(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("custom/spec.yaml");
     });
 
-    it("should pass format option to spectral", () => {
+    it("should pass format option to asyncapi", () => {
       const run = createRun({ options: { format: "json" } });
 
-      lint(run);
+      validate(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--format");
+      expect(call.args).toContain("--diagnostics-format");
       expect(call.args).toContain("json");
     });
 
     it("should pass output option when specified", () => {
-      const run = createRun({
-        options: { format: "json", output: "results.json" },
-      });
+      const run = createRun({ options: { output: "results.json" } });
 
-      lint(run);
+      validate(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--output");
+      expect(call.args).toContain("--save-output");
       expect(call.args).toContain("results.json");
     });
 
-    it("should use CLI-provided ruleset when specified", () => {
-      const run = createRun({ options: { ruleset: "custom/spectral.yaml" } });
-
-      lint(run);
-
-      const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--ruleset");
-      expect(call.args).toContain("custom/spectral.yaml");
-    });
-
-    it("should not pass ruleset when local config exists", () => {
-      vi.spyOn(fs, "readdirSync").mockReturnValue([
-        mockDirent(".spectral.yaml"),
-      ]);
-
+    it("should not pass output option when not specified", () => {
       const run = createRun();
 
-      lint(run);
+      validate(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).not.toContain("--ruleset");
-    });
-
-    it("should use bundled ruleset when no local config", () => {
-      const run = createRun();
-
-      lint(run);
-
-      const call = getSpawnCall("inherit");
-      const rulesetIndex = call.args.indexOf("--ruleset");
-      expect(call.args[rulesetIndex + 1]).toContain("defaults/spectral.yaml");
+      expect(call.args).not.toContain("--save-output");
     });
 
     it("should pass fail-severity option", () => {
       const run = createRun({ options: { failSeverity: "error" } });
 
-      lint(run);
+      validate(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--fail-severity");
       expect(call.args).toContain("error");
     });
 
-    it("should pass display-only-failures flag when true", () => {
-      const run = createRun({ options: { displayOnlyFailures: true } });
+    it("should use default fail-severity when not specified", () => {
+      const run = createRun();
 
-      lint(run);
-
-      const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--display-only-failures");
-    });
-
-    it("should not pass display-only-failures flag when false", () => {
-      const run = createRun({ options: { displayOnlyFailures: false } });
-
-      lint(run);
+      validate(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).not.toContain("--display-only-failures");
-    });
-
-    it("should pass verbose flag when true", () => {
-      const run = createRun({ options: { verbose: true } });
-
-      lint(run);
-
-      const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--verbose");
+      expect(call.args).toContain("--fail-severity");
+      expect(call.args).toContain("warn");
     });
 
     it("should use ignore stdio when globals.silent is true", () => {
       const run = createRun({ globals: { quiet: false, silent: true } });
 
-      lint(run);
+      validate(run);
       getSpawnCall("ignore");
     });
 
@@ -186,7 +138,7 @@ describe("Spectral Lint Functions", () => {
 
       const run = createRun({ globals: { quiet: true, silent: false } });
 
-      lint(run);
+      validate(run);
 
       expect(logSpy).not.toHaveBeenCalled();
     });
@@ -196,25 +148,25 @@ describe("Spectral Lint Functions", () => {
 
       const run = createRun({ globals: { quiet: false, silent: false } });
 
-      lint(run);
+      validate(run);
 
       expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Spectral lint"),
+        expect.stringContaining("AsyncAPI validate"),
       );
     });
 
-    it("should forward passthrough args to spectral", () => {
+    it("should forward passthrough args to asyncapi", () => {
       const run = createRun({
-        passthrough: ["--ignore-unknown-format"],
+        passthrough: ["--log-diagnostics"],
       });
 
-      lint(run);
+      validate(run);
 
       const call = getSpawnCall("inherit");
-      expect(call.args).toContain("--ignore-unknown-format");
+      expect(call.args).toContain("--log-diagnostics");
     });
 
-    it("should return non-zero exit code on lint failure", () => {
+    it("should return non-zero exit code on validation failure", () => {
       vi.mocked(spawnSync).mockReturnValue({
         ...okSpawnResult(),
         status: 1,
@@ -222,7 +174,7 @@ describe("Spectral Lint Functions", () => {
 
       const run = createRun();
 
-      expect(lint(run)).toBe(1);
+      expect(validate(run)).toBe(1);
     });
 
     it("should throw when spawnSync errors", () => {
@@ -233,7 +185,7 @@ describe("Spectral Lint Functions", () => {
 
       const run = createRun();
 
-      expect(() => lint(run)).toThrow("spawn failed");
+      expect(() => validate(run)).toThrow("spawn failed");
     });
   });
 });

@@ -1,4 +1,5 @@
 import { Command } from "@commander-js/extra-typings";
+import { asyncapiCommand } from "../asyncapi/command.js";
 import { redoclyCommand } from "../redocly/command.js";
 import { spectralCommand } from "../spectral/command.js";
 
@@ -33,5 +34,6 @@ export function buildProgram() {
       if (opts.cwd) process.chdir(opts.cwd);
     })
     .addCommand(spectralCommand)
-    .addCommand(redoclyCommand);
+    .addCommand(redoclyCommand)
+    .addCommand(asyncapiCommand);
 }
