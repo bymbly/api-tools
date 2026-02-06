@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { run } from "../../src/lib/asyncapi/cli.js";
-import { Options, validate } from "../../src/lib/asyncapi/validate.js";
+import { Options, lint } from "../../src/lib/asyncapi/lint.js";
 import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
 
 vi.mock("node:child_process");
@@ -11,7 +11,7 @@ const createRun = withDefaults<string, Options>("asyncapi/asyncapi.yaml", {
   failSeverity: "warn",
 });
 
-describe("AsyncAPI Validate Functions", () => {
+describe("AsyncAPI Lint Functions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "log").mockImplementation(vi.fn());
@@ -26,7 +26,7 @@ describe("AsyncAPI Validate Functions", () => {
   describe("run", () => {
     it("should pass args directly to asyncapi cli", () => {
       const exitCode = run(
-        ["validate", "spec.yaml", "--diagnostics-format", "json"],
+        ["lint", "spec.yaml", "--diagnostics-format", "json"],
         "inherit",
       );
 
@@ -34,7 +34,7 @@ describe("AsyncAPI Validate Functions", () => {
       const call = getSpawnCall("inherit");
       expect(call.args).toEqual(
         expect.arrayContaining([
-          "validate",
+          "lint",
           "spec.yaml",
           "--diagnostics-format",
           "json",
@@ -53,16 +53,16 @@ describe("AsyncAPI Validate Functions", () => {
         status: 2,
       });
 
-      const exitCode = run(["validate", "bad.yaml"], "inherit");
+      const exitCode = run(["lint", "bad.yaml"], "inherit");
       expect(exitCode).toBe(2);
     });
   });
 
-  describe("validate", () => {
+  describe("lint", () => {
     it("should use provided input", () => {
       const run = createRun();
 
-      expect(validate(run)).toBe(0);
+      expect(lint(run)).toBe(0);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("asyncapi/asyncapi.yaml");
@@ -71,7 +71,7 @@ describe("AsyncAPI Validate Functions", () => {
     it("should use custom input when provided", () => {
       const run = createRun({ input: "custom/spec.yaml" });
 
-      validate(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("custom/spec.yaml");
@@ -80,7 +80,7 @@ describe("AsyncAPI Validate Functions", () => {
     it("should pass format option to asyncapi", () => {
       const run = createRun({ options: { format: "json" } });
 
-      validate(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--diagnostics-format");
@@ -90,7 +90,7 @@ describe("AsyncAPI Validate Functions", () => {
     it("should pass output option when specified", () => {
       const run = createRun({ options: { output: "results.json" } });
 
-      validate(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--save-output");
@@ -100,7 +100,7 @@ describe("AsyncAPI Validate Functions", () => {
     it("should not pass output option when not specified", () => {
       const run = createRun();
 
-      validate(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).not.toContain("--save-output");
@@ -109,7 +109,7 @@ describe("AsyncAPI Validate Functions", () => {
     it("should pass fail-severity option", () => {
       const run = createRun({ options: { failSeverity: "error" } });
 
-      validate(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--fail-severity");
@@ -119,7 +119,7 @@ describe("AsyncAPI Validate Functions", () => {
     it("should use default fail-severity when not specified", () => {
       const run = createRun();
 
-      validate(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--fail-severity");
@@ -129,7 +129,7 @@ describe("AsyncAPI Validate Functions", () => {
     it("should use ignore stdio when globals.silent is true", () => {
       const run = createRun({ globals: { quiet: false, silent: true } });
 
-      validate(run);
+      lint(run);
       getSpawnCall("ignore");
     });
 
@@ -138,7 +138,7 @@ describe("AsyncAPI Validate Functions", () => {
 
       const run = createRun({ globals: { quiet: true, silent: false } });
 
-      validate(run);
+      lint(run);
 
       expect(logSpy).not.toHaveBeenCalled();
     });
@@ -148,10 +148,10 @@ describe("AsyncAPI Validate Functions", () => {
 
       const run = createRun({ globals: { quiet: false, silent: false } });
 
-      validate(run);
+      lint(run);
 
       expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining("AsyncAPI validate"),
+        expect.stringContaining("AsyncAPI lint"),
       );
     });
 
@@ -160,13 +160,13 @@ describe("AsyncAPI Validate Functions", () => {
         passthrough: ["--log-diagnostics"],
       });
 
-      validate(run);
+      lint(run);
 
       const call = getSpawnCall("inherit");
       expect(call.args).toContain("--log-diagnostics");
     });
 
-    it("should return non-zero exit code on validation failure", () => {
+    it("should return non-zero exit code on lint failure", () => {
       vi.mocked(spawnSync).mockReturnValue({
         ...okSpawnResult(),
         status: 1,
@@ -174,7 +174,7 @@ describe("AsyncAPI Validate Functions", () => {
 
       const run = createRun();
 
-      expect(validate(run)).toBe(1);
+      expect(lint(run)).toBe(1);
     });
 
     it("should throw when spawnSync errors", () => {
@@ -185,7 +185,7 @@ describe("AsyncAPI Validate Functions", () => {
 
       const run = createRun();
 
-      expect(() => validate(run)).toThrow("spawn failed");
+      expect(() => lint(run)).toThrow("spawn failed");
     });
   });
 });
