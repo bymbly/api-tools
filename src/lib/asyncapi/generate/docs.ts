@@ -48,7 +48,7 @@ export const docsCommand = new Command("docs")
   .allowExcessArguments(true)
   .action(runDocs);
 
-function runDocs(
+export function runDocs(
   input: string | undefined,
   options: Options,
   cmd: CommandUnknownOpts,
@@ -74,7 +74,7 @@ export function docs(params: SingleInputExecuteParams<Options>): number {
     console.log(
       `   Output: ${options.singleFile ? options.output : args.options.output}`,
     );
-    if (options.params.length > 0) {
+    if (args.options.params.length > 0) {
       console.log(`   Params: ${args.options.params.join(", ")}`);
     }
     if (!options.singleFile) {
