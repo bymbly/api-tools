@@ -27,13 +27,13 @@ export const fromTemplateCommand = new Command("from-template")
   .argument("[input]", "Document path (default: asyncapi/asyncapi.yaml)")
 
   .option(
-    "--output <file>",
-    "Output file or directory path (default: dist/generated/)",
+    "--output <directory>",
+    "Output directory path (default: dist/generated/)",
     "dist/generated/",
   )
   .option(
     "--params <key=value...>",
-    "Template parameter (can be used multiple times)",
+    "Additional params to pass to the template",
     (val, prev): string[] => {
       return prev.concat([val]);
     },
@@ -86,6 +86,9 @@ Please provide an input file when using passthrough arguments.
     console.log(`   Template: ${options.template}`);
     console.log(`   Input: ${input}`);
     console.log(`   Output: ${options.output}`);
+    if (options.params.length > 0) {
+      console.log(`   Params: ${options.params.join(", ")}`);
+    }
   }
 
   return run(args, stdio);
