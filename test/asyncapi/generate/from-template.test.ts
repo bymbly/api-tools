@@ -1,11 +1,11 @@
 import { spawnSync } from "node:child_process";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { run } from "../../src/lib/asyncapi/cli.js";
+import { run } from "../../../src/lib/asyncapi/cli.js";
 import {
   fromTemplate,
   Options,
-} from "../../src/lib/asyncapi/generate/from-template.js";
-import { getSpawnCall, okSpawnResult, withDefaults } from "../helper.js";
+} from "../../../src/lib/asyncapi/generate/from-template.js";
+import { getSpawnCall, okSpawnResult, withDefaults } from "../../helper.js";
 
 vi.mock("node:child_process");
 

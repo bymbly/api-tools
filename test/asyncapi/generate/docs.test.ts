@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { docs, Options } from "../../src/lib/asyncapi/generate/docs.js";
-import * as FromTemplateCommand from "../../src/lib/asyncapi/generate/from-template.js";
-import { withDefaults } from "../helper.js";
+import { docs, Options } from "../../../src/lib/asyncapi/generate/docs.js";
+import * as FromTemplateCommand from "../../../src/lib/asyncapi/generate/from-template.js";
+import { withDefaults } from "../../helper.js";
 
 vi.mock("../../src/lib/asyncapi/generate/from-template.js");
 
