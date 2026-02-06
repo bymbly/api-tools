@@ -3,7 +3,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runCli } from "../helper.js";
 
-describe("AsyncAPI Validate Integration Tests", () => {
+describe("AsyncAPI Lint Integration Tests", () => {
   const originalCwd = process.cwd();
   let tempDir: string;
 
@@ -27,7 +27,7 @@ describe("AsyncAPI Validate Integration Tests", () => {
 
       const result = runCli([
         "asyncapi",
-        "validate",
+        "lint",
         "asyncapi/asyncapi.yaml",
         "--silent",
       ]);
@@ -44,7 +44,7 @@ describe("AsyncAPI Validate Integration Tests", () => {
 
       const result = runCli([
         "asyncapi",
-        "validate",
+        "lint",
         "asyncapi/asyncapi.yaml",
         "--silent",
       ]);
@@ -61,13 +61,13 @@ describe("AsyncAPI Validate Integration Tests", () => {
         { recursive: true },
       );
 
-      const result = runCli(["asyncapi", "validate", "--silent"]);
+      const result = runCli(["asyncapi", "lint", "--silent"]);
 
       expect(result.exitCode).toBe(0);
     });
 
     it("should fail when no input provided and default doesn't exist", () => {
-      const result = runCli(["asyncapi", "validate", "--silent"]);
+      const result = runCli(["asyncapi", "lint", "--silent"]);
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("no input document specified");
@@ -84,19 +84,19 @@ describe("AsyncAPI Validate Integration Tests", () => {
 
       const result = runCli([
         "asyncapi",
-        "validate",
+        "lint",
         "asyncapi/asyncapi.yaml",
         "--format",
         "json",
         "--output",
-        "validation-results.json",
+        "lint-results.json",
         "--silent",
       ]);
 
       expect(result.exitCode).toBe(0);
-      expect(fs.existsSync("validation-results.json")).toBe(true);
+      expect(fs.existsSync("lint-results.json")).toBe(true);
 
-      const content = fs.readFileSync("validation-results.json", "utf-8");
+      const content = fs.readFileSync("lint-results.json", "utf-8");
       expect(() => JSON.parse(content) as unknown).not.toThrow();
     });
   });
@@ -114,7 +114,7 @@ describe("AsyncAPI Validate Integration Tests", () => {
 
       const result = runCli([
         "asyncapi",
-        "validate",
+        "lint",
         "custom/spec.yaml",
         "--silent",
       ]);
@@ -131,7 +131,7 @@ describe("AsyncAPI Validate Integration Tests", () => {
 
       const result = runCli([
         "asyncapi",
-        "validate",
+        "lint",
         "asyncapi/asyncapi.yaml",
         "--silent",
         "--",
@@ -155,7 +155,7 @@ describe("AsyncAPI Validate Integration Tests", () => {
         "--cwd",
         subDir,
         "asyncapi",
-        "validate",
+        "lint",
         "asyncapi/asyncapi.yaml",
         "--silent",
       ]);

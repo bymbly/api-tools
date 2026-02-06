@@ -35,8 +35,8 @@ export interface Options {
   failSeverity: FailSeverity;
 }
 
-export const validateCommand = new Command("validate")
-  .description("Validate AsyncAPI documents")
+export const lintCommand = new Command("lint")
+  .description("Validate and lint AsyncAPI documents")
   .argument("[input]", "Document path (default: asyncapi/asyncapi.yaml)")
 
   .addOption(
@@ -51,9 +51,9 @@ export const validateCommand = new Command("validate")
       .default("warn" satisfies FailSeverity),
   )
   .allowExcessArguments(true)
-  .action(runValidate);
+  .action(runLint);
 
-function runValidate(
+function runLint(
   input: string | undefined,
   options: Options,
   cmd: CommandUnknownOpts,
@@ -63,11 +63,11 @@ function runValidate(
     options,
     cmd,
     defaultInput: "asyncapi/asyncapi.yaml",
-    execute: validate,
+    execute: lint,
   });
 }
 
-export function validate(params: SingleInputExecuteParams<Options>): number {
+export function lint(params: SingleInputExecuteParams<Options>): number {
   const { input, options, globals } = params;
 
   const args = buildArgs(params);
@@ -75,7 +75,7 @@ export function validate(params: SingleInputExecuteParams<Options>): number {
   const quiet = isQuiet(globals);
 
   if (!quiet) {
-    console.log(`🔍 AsyncAPI validate...`);
+    console.log(`🔍 AsyncAPI lint...`);
     console.log(`   Input: ${input}`);
     console.log(`   Format: ${options.format}`);
     if (options.output) {

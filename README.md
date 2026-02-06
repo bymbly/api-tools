@@ -7,7 +7,7 @@ customization through CLI options and passthrough arguments.
 
 **Supports:** OpenAPI, AsyncAPI, Arazzo
 
-**Wraps:** [Redocly](https://github.com/Redocly/redocly-cli) | [Spectral](https://github.com/stoplightio/spectral)
+**Wraps:** [AsyncAPI](https://www.asyncapi.com/en/tools/cli) | [Redocly](https://github.com/Redocly/redocly-cli) | [Spectral](https://github.com/stoplightio/spectral)
 
 [![CI](https://github.com/bymbly/api-tools/actions/workflows/workflow.yaml/badge.svg)](https://github.com/bymbly/api-tools/actions/workflows/workflow.yaml)
 [![NPM Version](https://img.shields.io/npm/v/@bymbly/api-tools)](https://www.npmjs.com/package/@bymbly/api-tools)
@@ -32,17 +32,24 @@ customization through CLI options and passthrough arguments.
   - [Command Structure](#command-structure)
     - [Global Options](#global-options)
   - [Commands](#commands)
-    - [Spectral Commands](#spectral-commands)
-      - [`spectral lint`](#spectral-lint)
-      - [`spectral init`](#spectral-init)
+    - [AsyncAPI Commands](#asyncapi-commands)
+      - [`asyncapi build-docs`](#asyncapi-build-docs)
+      - [`asyncapi bundle`](#asyncapi-bundle)
+      - [`asyncapi format`](#asyncapi-format)
+      - [`asyncapi generate docs`](#asyncapi-generate-docs)
+      - [`asyncapi generate from-template`](#asyncapi-generate-from-template)
+      - [`asyncapi lint`](#asyncapi-lint)
     - [Redocly Commands](#redocly-commands)
-      - [`redocly lint`](#redocly-lint)
       - [`redocly build-docs`](#redocly-build-docs)
       - [`redocly bundle`](#redocly-bundle)
-      - [`redocly join`](#redocly-join)
       - [`redocly generate-arazzo`](#redocly-generate-arazzo)
-      - [`redocly respect`](#redocly-respect)
       - [`redocly init`](#redocly-init)
+      - [`redocly join`](#redocly-join)
+      - [`redocly lint`](#redocly-lint)
+      - [`redocly respect`](#redocly-respect)
+    - [Spectral Commands](#spectral-commands)
+      - [`spectral init`](#spectral-init)
+      - [`spectral lint`](#spectral-lint)
   - [Default File Locations](#default-file-locations)
   - [Configuration Files](#configuration-files)
     - [Auto-Discovery](#auto-discovery)
@@ -76,12 +83,15 @@ Add scripts to your `package.json`:
 ```json
 {
   "scripts": {
-    "lint": "npm run lint:spectral && npm run lint:redocly",
+    "lint": "npm run lint:spectral && npm run lint:redocly && npm run lint:asyncapi",
     "lint:spectral": "api-tools spectral lint",
     "lint:redocly": "api-tools redocly lint",
-    "bundle": "api-tools redocly bundle",
+    "lint:asyncapi": "api-tools asyncapi lint",
+    "bundle:openapi": "api-tools redocly bundle",
+    "bundle:asyncapi": "api-tools asyncapi bundle",
     "join": "api-tools redocly join",
-    "docs": "api-tools redocly build-docs",
+    "docs:openapi": "api-tools redocly build-docs",
+    "docs:asyncapi": "api-tools asyncapi build-docs",
     "arazzo:gen": "api-tools redocly generate-arazzo",
     "test:api": "api-tools redocly respect"
   }
@@ -91,12 +101,14 @@ Add scripts to your `package.json`:
 Run:
 
 ```bash
-npm run lint        # Lint with both Spectral and Redocly
-npm run bundle      # Bundle OpenAPI documents
-npm run join        # Join OpenAPI documents
-npm run docs        # Generate HTML documentation
-npm run arazzo:gen  # Generate Arazzo workflow starter
-npm run test:api    # Execute Arazzo workflow tests
+npm run lint              # Lint with both Spectral and Redocly
+npm run bundle:openapi    # Bundle OpenAPI documents
+npm run bundle:asyncapi   # Bundle AsyncAPI documents
+npm run join              # Join OpenAPI documents
+npm run docs:openapi      # Generate OpenAPI HTML documentation
+npm run docs:asyncapi     # Generate AsyncAPI HTML documentation
+npm run arazzo:gen        # Generate Arazzo workflow starter
+npm run test:api          # Execute Arazzo workflow tests
 ```
 
 ## Command Structure
@@ -115,101 +127,184 @@ Available for all commands:
 
 ## Commands
 
-### Spectral Commands
+### AsyncAPI Commands
 
-#### `spectral lint`
+#### `asyncapi build-docs`
 
-Validate and lint OpenAPI, AsyncAPI, and Arazzo documents.
+Alias for `asyncapi generate docs` - builds HTML documentation from AsyncAPI documents.
+
+```bash
+api-tools asyncapi build-docs [input] [options]
+```
+
+See [`asyncapi generate docs`](#asyncapi-generate-docs) for full usage details.
+
+#### `asyncapi bundle`
+
+Bundle AsyncAPI documents into a single file.
 
 **Usage:**
 
 ```bash
-api-tools spectral lint [input] [options]
+api-tools asyncapi bundle [input] [options]
 ```
 
 **Options:**
 
-- `[input]` - Document path (default: auto-detect)
-- `--openapi` - Lint only OpenAPI at `openapi/openapi.yaml`
-- `--asyncapi` - Lint only AsyncAPI at `asyncapi/asyncapi.yaml`
-- `--arazzo` - Lint only Arazzo at `arazzo/arazzo.yaml`
-- `--format <format>` - Output format (default: `stylish`)
-  - Choices: `json`, `stylish`, `junit`, `html`, `text`, `teamcity`, `pretty`, `github-actions`, `sarif`, `markdown`, `gitlab`
-- `--output <file>` - Write output to file
-- `--ruleset <file>` - Custom ruleset (overrides auto/bundled)
-- `--fail-severity <level>` - Fail threshold (default: `warn`)
-  - Choices: `error`, `warn`, `info`, `hint`
-- `--display-only-failures` - Show only failing results
-- `--verbose` - Enable verbose output
+- `[input]` - Document path (default: `asyncapi/asyncapi.yaml`)
+- `--output <path>` - Output file path (default: `dist/bundle/asyncapi.yaml`)
+- `--ext <extension>` - Output extension (overrides `--output` extension)
+  - Choices: `json`, `yaml`, `yml`
+- `--x-origin` - Generate x-origin fields with dereferenced $ref history
 
 **Examples:**
 
 ```bash
-# Auto-detect and lint all specs
-api-tools spectral lint
+# Bundle with defaults
+api-tools asyncapi bundle
 
-# Lint specific spec types
-api-tools spectral lint --openapi
-api-tools spectral lint --asyncapi --arazzo
+# Bundle to JSON
+api-tools asyncapi bundle --ext json
 
-# Lint specific file
-api-tools spectral lint custom/spec.yaml
+# Bundle with x-origin tracking
+api-tools asyncapi bundle --x-origin
 
-# JSON output
-api-tools spectral lint --format json --output results.json
-
-# Custom ruleset
-api-tools spectral lint --ruleset .spectral.yaml
-
-# Passthrough advanced options
-api-tools spectral lint -- --ignore-unknown-format
+# Custom output
+api-tools asyncapi bundle --output dist/api-bundle.yaml
 ```
 
-#### `spectral init`
+#### `asyncapi format`
 
-Create a default `spectral.yaml` config file.
+Convert AsyncAPI documents between formats (YAML <---> JSON).
+
+**Usage:**
 
 ```bash
-api-tools spectral init [--force]
+api-tools asyncapi format [input] [options]
+```
+
+**Options:**
+
+- `[input]` - Document path (default: `asyncapi/asyncapi.yaml`)
+- `--output <file>` - Output file path (default: `dist/format/asyncapi.json`)
+- `--ext <extension>` - Output extension (overrides `--output` extension)
+  - Choices: `json`, `yaml`, `yml`
+
+**Examples:**
+
+```bash
+# Convert to JSON (default)
+api-tools asyncapi format
+
+# Convert to YAML
+api-tools asyncapi format --ext yaml
+
+# Custom input and output
+api-tools asyncapi format input.json --output output.yaml
+```
+
+#### `asyncapi generate docs`
+
+Generate HTML documentation (convenience wrapper around [`from-template`](#asyncapi-generate-from-template) with HTML template).
+
+**Usage:**
+
+```bash
+api-tools asyncapi generate docs [input] [options]
+```
+
+**Options:**
+
+- `[input]` - Document path (default: `asyncapi/asyncapi.yaml`)
+- `--output <file>` - Output HTML file (default: `dist/docs/asyncapi.html`)
+- `--params <key=value...>` - Template parameters (can be repeated)
+- `--single-file` - Generate single HTML file (default: `true`)
+- `--no-single-file` - Generate multiple files
+
+**Examples:**
+
+```bash
+# Generate single-file docs
+api-tools asyncapi generate docs
+
+# Generate multi-file docs
+api-tools asyncapi generate docs --no-single-file
+
+# Custom output and parameters
+api-tools asyncapi generate docs --output public/api.html \
+  --params version=2.0.0
+```
+
+#### `asyncapi generate from-template`
+
+Generate code or documentation from AsyncAPI documents using templates.
+
+**Usage:**
+
+```bash
+api-tools asyncapi generate from-template <template> [input] [options]
+```
+
+**Options:**
+
+- `<template>` - **REQUIRED.** Template name or URL (e.g., `@asyncapi/html-template`)
+- `[input]` - Document path (default: `asyncapi/asyncapi.yaml`)
+- `--output <directory>` - Output directory (default: `dist/generated/`)
+- `--params <key=value...>` - Template parameters (can be repeated)
+- `--force-write` - Overwrite existing files
+
+**Examples:**
+
+```bash
+# Generate HTML docs
+api-tools asyncapi generate from-template @asyncapi/html-template
+
+# Generate with custom output
+api-tools asyncapi generate from-template @asyncapi/nodejs-template \
+  --output src/generated
+
+# Generate with parameters
+api-tools asyncapi generate from-template @asyncapi/java-spring-template \
+  --params javaPackage=com.example.myapp.codegen maven=true
+```
+
+#### `asyncapi lint`
+
+Validate and lint AsyncAPI documents.
+
+**Usage:**
+
+```bash
+api-tools asyncapi lint [input] [options]
+```
+
+**Options:**
+
+- `[input]` - Document path (default: `asyncapi/asyncapi.yaml`)
+- `--format <format>` - Output format (default: `stylish`)
+  - Choices: `json`, `stylish`, `junit`, `html`, `teamcity`, `pretty`, `github-actions`, `sarif`,
+    `code-climate`, `gitlab`, `markdown`
+- `--output <file>` - Write output to file
+- `--fail-severity <level>` - Fail threshold (default: `warn`)
+  - Choices: `error`, `warn`, `info`, `hint`
+
+**Examples:**
+
+```bash
+# Lint default AsyncAPI spec
+api-tools asyncapi lint
+
+# Lint specific file
+api-tools asyncapi lint custom/spec.yaml
+
+# JSON output
+api-tools asyncapi lint --format json --output results.json
+
+# Only fail on errors
+api-tools asyncapi lint --fail-severity error
 ```
 
 ### Redocly Commands
-
-#### `redocly lint`
-
-Validate and lint OpenAPI, AsyncAPI, and Arazzo documents using Redocly.
-
-**Usage:**
-
-```bash
-api-tools redocly lint [input] [options]
-```
-
-**Options:**
-
-- `[input]` - Document path (default: auto-detect)
-- `--openapi` - Lint only OpenAPI at `openapi/openapi.yaml`
-- `--asyncapi` - Lint only AsyncAPI at `asyncapi/asyncapi.yaml`
-- `--arazzo` - Lint only Arazzo at `arazzo/arazzo.yaml`
-- `--format <format>` - Output format (default: `codeframe`)
-  - Choices: `codeframe`, `stylish`, `json`, `checkstyle`, `codeclimate`, `github-actions`, `markdown`, `summary`
-- `--config <file>` - Config file path (overrides auto/bundled)
-
-**Examples:**
-
-```bash
-# Auto-detect and lint all specs
-api-tools redocly lint
-
-# Lint only OpenAPI
-api-tools redocly lint --openapi
-
-# JSON output
-api-tools redocly lint --format json
-
-# Custom config
-api-tools redocly lint --config custom-redocly.yaml
-```
 
 #### `redocly build-docs`
 
@@ -283,6 +378,41 @@ api-tools redocly bundle --output dist/api-bundle.yaml
 api-tools redocly bundle -- --remove-unused-components
 ```
 
+#### `redocly generate-arazzo`
+
+Generate Arazzo workflow description from OpenAPI document.
+
+**Usage:**
+
+```bash
+api-tools redocly generate-arazzo [input] [options]
+```
+
+**Options:**
+
+- `[input]` - OpenAPI document path (default: `openapi/openapi.yaml`)
+- `--output <file>` - Output file path (default: `arazzo/auto-generated.arazzo.yaml`)
+
+**Note:** Generated Arazzo files require manual editing to be functional.
+
+**Examples:**
+
+```bash
+# Generate from default OpenAPI
+api-tools redocly generate-arazzo
+
+# Custom output
+api-tools redocly generate-arazzo --output arazzo/workflows.arazzo.yaml
+```
+
+#### `redocly init`
+
+Create a default `redocly.yaml` config file.
+
+```bash
+api-tools redocly init [--force]
+```
+
 #### `redocly join`
 
 Join multiple OpenAPI 3.x documents into a single file.
@@ -321,7 +451,8 @@ api-tools redocly join <inputs...> [options]
 api-tools redocly join api-1.yaml api-2.yaml
 
 # Join with custom output
-api-tools redocly join users-api.yaml orders-api.yaml --output dist/combined-api.yaml
+api-tools redocly join users-api.yaml orders-api.yaml \
+  --output dist/combined-api.yaml
 
 # Resolve component naming conflicts using version
 api-tools redocly join museum-v1.yaml museum-v2.yaml \
@@ -342,31 +473,40 @@ api-tools redocly join api-a.yaml api-b.yaml --without-x-tag-groups
 api-tools redocly join *.yaml -- --lint-config error
 ```
 
-#### `redocly generate-arazzo`
+#### `redocly lint`
 
-Generate Arazzo workflow description from OpenAPI document.
+Validate and lint OpenAPI, AsyncAPI, and Arazzo documents using Redocly.
 
 **Usage:**
 
 ```bash
-api-tools redocly generate-arazzo [input] [options]
+api-tools redocly lint [input] [options]
 ```
 
 **Options:**
 
-- `[input]` - OpenAPI document path (default: `openapi/openapi.yaml`)
-- `--output <file>` - Output file path (default: `arazzo/auto-generated.arazzo.yaml`)
-
-**Note:** Generated Arazzo files require manual editing to be functional.
+- `[input]` - Document path (default: auto-detect)
+- `--openapi` - Lint only OpenAPI at `openapi/openapi.yaml`
+- `--asyncapi` - Lint only AsyncAPI at `asyncapi/asyncapi.yaml`
+- `--arazzo` - Lint only Arazzo at `arazzo/arazzo.yaml`
+- `--format <format>` - Output format (default: `codeframe`)
+  - Choices: `codeframe`, `stylish`, `json`, `checkstyle`, `codeclimate`, `github-actions`, `markdown`, `summary`
+- `--config <file>` - Config file path (overrides auto/bundled)
 
 **Examples:**
 
 ```bash
-# Generate from default OpenAPI
-api-tools redocly generate-arazzo
+# Auto-detect and lint all specs
+api-tools redocly lint
 
-# Custom output
-api-tools redocly generate-arazzo --output arazzo/workflows.arazzo.yaml
+# Lint only OpenAPI
+api-tools redocly lint --openapi
+
+# JSON output
+api-tools redocly lint --format json
+
+# Custom config
+api-tools redocly lint --config custom-redocly.yaml
 ```
 
 #### `redocly respect`
@@ -412,12 +552,62 @@ api-tools redocly respect --json-output results.json --verbose
 api-tools redocly respect -- --max-steps 100 --severity '{"STATUS_CODE_CHECK":"warn"}'
 ```
 
-#### `redocly init`
+### Spectral Commands
 
-Create a default `redocly.yaml` config file.
+#### `spectral init`
+
+Create a default `spectral.yaml` config file.
 
 ```bash
-api-tools redocly init [--force]
+api-tools spectral init [--force]
+```
+
+#### `spectral lint`
+
+Validate and lint OpenAPI, AsyncAPI, and Arazzo documents.
+
+**Usage:**
+
+```bash
+api-tools spectral lint [input] [options]
+```
+
+**Options:**
+
+- `[input]` - Document path (default: auto-detect)
+- `--openapi` - Lint only OpenAPI at `openapi/openapi.yaml`
+- `--asyncapi` - Lint only AsyncAPI at `asyncapi/asyncapi.yaml`
+- `--arazzo` - Lint only Arazzo at `arazzo/arazzo.yaml`
+- `--format <format>` - Output format (default: `stylish`)
+  - Choices: `json`, `stylish`, `junit`, `html`, `text`, `teamcity`, `pretty`, `github-actions`, `sarif`, `markdown`, `gitlab`
+- `--output <file>` - Write output to file
+- `--ruleset <file>` - Custom ruleset (overrides auto/bundled)
+- `--fail-severity <level>` - Fail threshold (default: `warn`)
+  - Choices: `error`, `warn`, `info`, `hint`
+- `--display-only-failures` - Show only failing results
+- `--verbose` - Enable verbose output
+
+**Examples:**
+
+```bash
+# Auto-detect and lint all specs
+api-tools spectral lint
+
+# Lint specific spec types
+api-tools spectral lint --openapi
+api-tools spectral lint --asyncapi --arazzo
+
+# Lint specific file
+api-tools spectral lint custom/spec.yaml
+
+# JSON output
+api-tools spectral lint --format json --output results.json
+
+# Custom ruleset
+api-tools spectral lint --ruleset .spectral.yaml
+
+# Passthrough advanced options
+api-tools spectral lint -- --ignore-unknown-format
 ```
 
 ## Default File Locations
@@ -435,11 +625,16 @@ project/
 │   └── auto-generated.arazzo.yaml  # Generated starter
 └── dist/
     ├── bundle/
-    │   └── openapi.yaml    # Bundled output
+    │   ├── openapi.yaml    # OpenAPI bundled output
+    │   └── asyncapi.yaml   # AsyncAPI bundled output
+    ├── format/
+    │   └── asyncapi.json   # AsyncAPI format output
+    ├── generated/          # AsyncAPI template output
     ├── join/
     │   └── openapi.yaml    # Joined output
     └── docs/
-        └── openapi.html    # Generated docs
+        ├── openapi.html    # OpenAPI docs
+        └── asyncapi.html   # AsyncAPI docs (or asyncapi/ for multi-file)
 ```
 
 ## Configuration Files
@@ -551,16 +746,21 @@ api-tools spectral lint --openapi
 # Lint using Redocly during development
 api-tools redocly lint --openapi
 
+# Lint AsyncAPI during development
+api-tools asyncapi lint
+
 # Generate docs for local preview
 api-tools redocly build-docs
+api-tools asyncapi build-docs
 ```
 
 ### Pre-commit
 
 ```bash
 # Fast validation
-api-tools spectral lint --fail-severity error
+api-tools spectral lint
 api-tools redocly lint
+api-tools asyncapi lint
 ```
 
 ### CI Pipeline
@@ -569,8 +769,11 @@ api-tools redocly lint
 # Full validation with outputs
 api-tools spectral lint --format github-actions
 api-tools redocly lint --format github-actions
+api-tools asyncapi lint --format github-actions
 api-tools redocly bundle --output dist/openapi.yaml
+api-tools asyncapi bundle --output dist/asyncapi.yaml
 api-tools redocly build-docs --output dist/api-docs.html
+api-tools asyncapi build-docs --output dist/asyncapi-docs.html
 ```
 
 ### API Testing
@@ -582,6 +785,12 @@ api-tools redocly respect \
   --input apiKey=${STAGING_API_KEY} \
   --json-output test-results.json \
   --verbose
+
+# Bundle AsyncAPI for deployment
+api-tools asyncapi bundle --output dist/asyncapi-production.yaml
+
+# Convert AsyncAPI to JSON for tooling
+api-tools asyncapi format --ext json --output dist/asyncapi.json
 ```
 
 ## Troubleshooting
