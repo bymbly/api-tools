@@ -94,7 +94,7 @@ function buildArgs(
 
   const parsed = path.parse(options.output);
   let outputDir = parsed.dir || ".";
-  let outputFilename = parsed.base;
+  const outputFilename = parsed.base;
 
   const templateParams: string[] = [];
   if (options.singleFile) {

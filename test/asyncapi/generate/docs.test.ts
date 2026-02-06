@@ -5,6 +5,14 @@ import { withDefaults } from "../../helper.js";
 
 vi.mock("../../src/lib/asyncapi/generate/from-template.js");
 
+type FromTemplateArgs = Parameters<typeof FromTemplateCommand.fromTemplate>[0];
+
+function getFirstFromTemplateCall(): FromTemplateArgs {
+  const call = vi.mocked(FromTemplateCommand.fromTemplate).mock.calls[0]?.[0];
+  expect(call).toBeTruthy();
+  return call;
+}
+
 const createRun = withDefaults<string, Options>("asyncapi/asyncapi.yaml", {
   output: "dist/docs/asyncapi.html",
   params: [],
@@ -52,13 +60,8 @@ describe("AsyncAPI Docs Functions", () => {
 
       docs(run);
 
-      expect(FromTemplateCommand.fromTemplate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          options: expect.objectContaining({
-            template: "@asyncapi/html-template@latest",
-          }),
-        }),
-      );
+      const call = getFirstFromTemplateCall();
+      expect(call.options.template).toBe("@asyncapi/html-template@latest");
     });
 
     it("should set forceWrite to true", () => {
@@ -66,13 +69,8 @@ describe("AsyncAPI Docs Functions", () => {
 
       docs(run);
 
-      expect(FromTemplateCommand.fromTemplate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          options: expect.objectContaining({
-            forceWrite: true,
-          }),
-        }),
-      );
+      const call = getFirstFromTemplateCall();
+      expect(call.options.forceWrite).toBe(true);
     });
 
     it("should parse output path and set directory for single file", () => {
@@ -80,13 +78,9 @@ describe("AsyncAPI Docs Functions", () => {
 
       docs(run);
 
-      expect(FromTemplateCommand.fromTemplate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          options: expect.objectContaining({
-            output: "dist/docs",
-          }),
-        }),
-      );
+      const call = getFirstFromTemplateCall();
+      expect(call.options.output).toBe("dist/docs");
+      expect(call.options.params).toContain("outFilename=api.html");
     });
 
     it("should add singleFile param when enabled", () => {
@@ -94,13 +88,8 @@ describe("AsyncAPI Docs Functions", () => {
 
       docs(run);
 
-      expect(FromTemplateCommand.fromTemplate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          options: expect.objectContaining({
-            params: expect.arrayContaining(["singleFile=true"]),
-          }),
-        }),
-      );
+      const call = getFirstFromTemplateCall();
+      expect(call.options.params).toContain("singleFile=true");
     });
 
     it("should add outFilename param with parsed filename", () => {
@@ -110,13 +99,8 @@ describe("AsyncAPI Docs Functions", () => {
 
       docs(run);
 
-      expect(FromTemplateCommand.fromTemplate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          options: expect.objectContaining({
-            params: expect.arrayContaining(["outFilename=asyncapi.html"]),
-          }),
-        }),
-      );
+      const call = getFirstFromTemplateCall();
+      expect(call.options.params).toContain("outFilename=asyncapi.html");
     });
 
     it("should use custom filename from output path", () => {
@@ -126,14 +110,9 @@ describe("AsyncAPI Docs Functions", () => {
 
       docs(run);
 
-      expect(FromTemplateCommand.fromTemplate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          options: expect.objectContaining({
-            output: "custom",
-            params: expect.arrayContaining(["outFilename=my-api.html"]),
-          }),
-        }),
-      );
+      const call = getFirstFromTemplateCall();
+      expect(call.options.output).toBe("custom");
+      expect(call.options.params).toContain("outFilename=my-api.html");
     });
 
     it("should create subdirectory for multi-file output", () => {
@@ -142,14 +121,8 @@ describe("AsyncAPI Docs Functions", () => {
       });
 
       docs(run);
-
-      expect(FromTemplateCommand.fromTemplate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          options: expect.objectContaining({
-            output: "dist/docs/asyncapi",
-          }),
-        }),
-      );
+      const call = getFirstFromTemplateCall();
+      expect(call.options.output).toBe("dist/docs/asyncapi");
     });
 
     it("should not add singleFile params when disabled", () => {
@@ -171,17 +144,13 @@ describe("AsyncAPI Docs Functions", () => {
 
       docs(run);
 
-      expect(FromTemplateCommand.fromTemplate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          options: expect.objectContaining({
-            params: expect.arrayContaining([
-              "singleFile=true",
-              expect.stringContaining("outFilename="),
-              "version=1.0.0",
-              "title=My API",
-            ]),
-          }),
-        }),
+      const call = getFirstFromTemplateCall();
+      expect(call.options.params).toEqual(
+        expect.arrayContaining([
+          "version=1.0.0",
+          "title=My API",
+          expect.stringContaining("outFilename="),
+        ]),
       );
     });
 
@@ -190,13 +159,8 @@ describe("AsyncAPI Docs Functions", () => {
 
       docs(run);
 
-      expect(FromTemplateCommand.fromTemplate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          options: expect.objectContaining({
-            output: ".",
-          }),
-        }),
-      );
+      const call = getFirstFromTemplateCall();
+      expect(call.options.output).toBe(".");
     });
 
     it("should suppress wrapper logging when quiet", () => {
