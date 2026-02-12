@@ -51,7 +51,7 @@
   "dependencies": {
     "@asyncapi/cli": "6.0.0",
     "@commander-js/extra-typings": "14.0.0",
-    "@redocly/cli": "2.15.0",
+    "@redocly/cli": "2.15.1",
     "@stoplight/spectral-cli": "6.15.0"
   },
   "devDependencies": {
