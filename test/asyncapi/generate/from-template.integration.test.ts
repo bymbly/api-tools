@@ -17,7 +17,7 @@ describe("AsyncAPI From-Template Integration Tests", () => {
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  describe("HTML template generation", { timeout: 60_000 }, () => {
+  describe("HTML template generation", () => {
     it("should generate HTML documentation from simple spec", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
@@ -43,7 +43,7 @@ describe("AsyncAPI From-Template Integration Tests", () => {
     });
   });
 
-  describe("default input handling", { timeout: 60_000 }, () => {
+  describe("default input handling", () => {
     it("should use default input path when no argument provided", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
@@ -77,7 +77,7 @@ describe("AsyncAPI From-Template Integration Tests", () => {
     });
   });
 
-  describe("output options", { timeout: 60_000 }, () => {
+  describe("output options", () => {
     it("should work with custom output path", () => {
       fs.cpSync(
         path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
@@ -174,7 +174,7 @@ describe("AsyncAPI From-Template Integration Tests", () => {
     });
   });
 
-  describe("custom options", { timeout: 60_000 }, () => {
+  describe("custom options", () => {
     it("should work with custom input path", () => {
       fs.mkdirSync(path.join(tempDir, "custom"), { recursive: true });
       fs.copyFileSync(
