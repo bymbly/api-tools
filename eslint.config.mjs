@@ -15,5 +15,5 @@ export default defineConfig(
       },
     },
   },
-  globalIgnores(["node_modules/", "eslint.config.mjs", "dist/"]),
+  globalIgnores(["node_modules/", "eslint.config.mjs", "dist/", "vitest.config.ts"]),
 );
