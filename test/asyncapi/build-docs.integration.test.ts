@@ -9,7 +9,7 @@ describe("AsyncAPI Build-Docs Integration Tests", () => {
 
   beforeAll(() => {
     originalCwd = process.cwd();
-    tempDir = fs.mkdtempSync(path.join(originalCwd, "test-build-docs-"));
+    tempDir = fs.mkdtempSync(path.join(originalCwd, "test-temp-"));
     process.chdir(tempDir);
   });
 
