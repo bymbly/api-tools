@@ -18,7 +18,7 @@ describe("AsyncAPI Build-Docs Integration Tests", () => {
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it("should work as top-level command alias", { timeout: 60_000 }, () => {
+  it("should work as top-level command alias", () => {
     fs.cpSync(
       path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
       path.join(tempDir, "asyncapi"),
