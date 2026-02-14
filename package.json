@@ -48,11 +48,14 @@
     "clean:dist": "rm -rf ./dist",
     "copy:defaults": "mkdir -p dist/defaults && cp -a defaults/. dist/defaults/"
   },
+  "//": "react/react/dom in dependencies: not used directly - ensures consistent hoisting for @redocly/cli and @asyncapi/cli. see: https://github.com/bymbly/api-tools/issues/37",
   "dependencies": {
     "@asyncapi/cli": "6.0.0",
     "@commander-js/extra-typings": "14.0.0",
     "@redocly/cli": "2.16.0",
-    "@stoplight/spectral-cli": "6.15.0"
+    "@stoplight/spectral-cli": "6.15.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
