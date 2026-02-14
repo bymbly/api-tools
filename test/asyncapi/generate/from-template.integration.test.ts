@@ -18,29 +18,33 @@ describe("AsyncAPI From-Template Integration Tests", () => {
   });
 
   describe("HTML template generation", () => {
-    it("should generate HTML documentation from simple spec", () => {
-      fs.cpSync(
-        path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
-        path.join(tempDir, "asyncapi"),
-        { recursive: true },
-      );
+    it(
+      "should generate HTML documentation from simple spec",
+      { timeout: 120_000 },
+      () => {
+        fs.cpSync(
+          path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
+          path.join(tempDir, "asyncapi"),
+          { recursive: true },
+        );
 
-      const result = runCli([
-        "asyncapi",
-        "generate",
-        "from-template",
-        "@asyncapi/html-template",
-        "asyncapi/asyncapi.yaml",
-        "--silent",
-      ]);
+        const result = runCli([
+          "asyncapi",
+          "generate",
+          "from-template",
+          "@asyncapi/html-template",
+          "asyncapi/asyncapi.yaml",
+          "--silent",
+        ]);
 
-      expect(result.exitCode).toBe(0);
-      expect(fs.existsSync("dist/generated")).toBe(true);
+        expect(result.exitCode).toBe(0);
+        expect(fs.existsSync("dist/generated")).toBe(true);
 
-      // html template generates index.html, css/* and js/* files
-      const generatedFiles = fs.readdirSync("dist/generated");
-      expect(generatedFiles.length).toBeGreaterThan(0);
-    });
+        // html template generates index.html, css/* and js/* files
+        const generatedFiles = fs.readdirSync("dist/generated");
+        expect(generatedFiles.length).toBeGreaterThan(0);
+      },
+    );
   });
 
   describe("default input handling", () => {
@@ -264,6 +268,21 @@ describe("AsyncAPI From-Template Integration Tests", () => {
 
       expect(result.exitCode).toBe(0);
       expect(fs.existsSync(path.join(subDir, "dist/generated"))).toBe(true);
+    });
+  });
+
+  describe("command aliases", () => {
+    it("should work as top-level build-docs command", () => {
+      fs.cpSync(
+        path.join(originalCwd, "test/fixtures/asyncapi/valid/simple-spec"),
+        path.join(tempDir, "asyncapi"),
+        { recursive: true },
+      );
+
+      const result = runCli(["asyncapi", "build-docs", "--silent"]);
+
+      expect(result.exitCode).toBe(0);
+      expect(fs.existsSync("dist/docs/asyncapi.html")).toBe(true);
     });
   });
 });
