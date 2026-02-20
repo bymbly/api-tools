@@ -52,7 +52,7 @@
   "dependencies": {
     "@asyncapi/cli": "6.0.0",
     "@commander-js/extra-typings": "14.0.0",
-    "@redocly/cli": "2.18.0",
+    "@redocly/cli": "2.18.1",
     "@stoplight/spectral-cli": "6.15.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
