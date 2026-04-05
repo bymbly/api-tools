@@ -15,19 +15,19 @@ concurrency:
 jobs:
   prettier-format-check:
     name: Format Check
-    uses: bymbly/gha-workflows/.github/workflows/prettier-format-check.yaml@758a0dad1307d30bf5b55608014e853b22eaa8d2 # main
+    uses: bymbly/gha-workflows/.github/workflows/prettier-format-check.yaml@97dbf0cc5710231952040ec9521c0f01ac1cbefb # main
 
   markdown-lint-check:
     name: Lint Check
-    uses: bymbly/gha-workflows/.github/workflows/markdown-lint-check.yaml@758a0dad1307d30bf5b55608014e853b22eaa8d2 # main
+    uses: bymbly/gha-workflows/.github/workflows/markdown-lint-check.yaml@97dbf0cc5710231952040ec9521c0f01ac1cbefb # main
 
   eslint-lint-check:
     name: ESLint Check
-    uses: bymbly/gha-workflows/.github/workflows/eslint-lint-check.yaml@758a0dad1307d30bf5b55608014e853b22eaa8d2 # main
+    uses: bymbly/gha-workflows/.github/workflows/eslint-lint-check.yaml@97dbf0cc5710231952040ec9521c0f01ac1cbefb # main
 
   npm-test:
     name: npm Test
-    uses: bymbly/gha-workflows/.github/workflows/npm-test.yaml@758a0dad1307d30bf5b55608014e853b22eaa8d2 # main
+    uses: bymbly/gha-workflows/.github/workflows/npm-test.yaml@97dbf0cc5710231952040ec9521c0f01ac1cbefb # main
 
   publish-npm-package:
     name: Publish NPM Package
@@ -40,6 +40,6 @@ jobs:
       issues: write
       pull-requests: write
       id-token: write # required for OIDC publishing
-    uses: bymbly/gha-workflows/.github/workflows/npm-semantic-release.yaml@758a0dad1307d30bf5b55608014e853b22eaa8d2 # main
+    uses: bymbly/gha-workflows/.github/workflows/npm-semantic-release.yaml@97dbf0cc5710231952040ec9521c0f01ac1cbefb # main
     with:
       registry-url: "https://registry.npmjs.org/"
