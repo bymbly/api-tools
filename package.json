@@ -54,8 +54,8 @@
     "@commander-js/extra-typings": "14.0.0",
     "@redocly/cli": "2.25.4",
     "@stoplight/spectral-cli": "6.15.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
