@@ -50,7 +50,7 @@
   },
   "//": "react/react/dom in dependencies: not used directly - ensures consistent hoisting for @redocly/cli and @asyncapi/cli. see: https://github.com/bymbly/api-tools/issues/37",
   "dependencies": {
-    "@asyncapi/cli": "6.0.1",
+    "@asyncapi/cli": "6.0.2",
     "@commander-js/extra-typings": "14.0.0",
     "@redocly/cli": "2.31.6",
     "@stoplight/spectral-cli": "6.16.0",
