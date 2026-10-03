@@ -65,7 +65,7 @@
     "markdownlint-cli2": "0.22.1",
     "prettier": "3.9.9",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.58.2",
+    "typescript-eslint": "8.70.1",
     "vitest": "4.1.11"
   }
 }
