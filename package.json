@@ -53,7 +53,7 @@
     "@asyncapi/cli": "6.2.0",
     "@commander-js/extra-typings": "14.0.0",
     "@redocly/cli": "2.43.3",
-    "@stoplight/spectral-cli": "6.16.3",
+    "@stoplight/spectral-cli": "6.17.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
