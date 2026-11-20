@@ -62,7 +62,7 @@
     "@types/node": "24.19.2",
     "@vitest/ui": "4.1.12",
     "eslint": "9.39.5",
-    "markdownlint-cli2": "0.22.1",
+    "markdownlint-cli2": "0.24.1",
     "prettier": "3.10.1",
     "typescript": "6.0.3",
     "typescript-eslint": "8.58.2",
